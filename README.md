@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/lumifren-logo.png" alt="Lumifren Logo" width="200" height="200">
+  <img src="assets/lumifren-logo.jpg" alt="Lumifren Logo" width="600">
 </p>
 
 <h1 align="center">Lumifren</h1>
