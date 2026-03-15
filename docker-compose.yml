@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # 1. Redis Database
+  kimi-redis-database:
+    image: redis:7-alpine
+    container_name: kimi-redis-database
+    networks:
+      - kimi-network
+    # Bind to all interfaces (0.0.0.0) to allow Tailscale access
+    ports:
+      - "0.0.0.0:6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes --tcp-keepalive 60
+
+  # 2. Redis Dashboard (GUI)
+  kimi-redis-dashboard:
+    image: rediscommander/redis-commander:latest
+    container_name: kimi-redis-dashboard
+    depends_on:
+      - kimi-redis-database
+    networks:
+      - kimi-network
+    environment:
+      - REDIS_HOSTS=local:kimi-redis-database:6379
+    # Bind to all interfaces to allow Tailscale access
+    ports:
+      - "0.0.0.0:5000:8081"
+    restart: unless-stopped
+
+networks:
+  kimi-network:
+    driver: bridge
+
+volumes:
+  redis-data:

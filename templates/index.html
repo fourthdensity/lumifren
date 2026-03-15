@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#030303">
+  <title>LUX.UX - Voice & Memory Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030303;
+      --surface: rgba(18, 18, 22, 0.8);
+      --accent-primary: #5e5ce6;
+      --accent-secondary: #ff375f;
+      --accent-tertiary: #00ffaa;
+      --text-main: #ffffff;
+      --text-muted: #8e8e93;
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --bubble-user: linear-gradient(135deg, #5e5ce6 0%, #3634a3 100%);
+      --bubble-ai: rgba(28, 28, 30, 0.6);
+      --sidebar-width: 300px;
+      --ease: cubic-bezier(0.2, 0, 0, 1);
+      
+      /* Neural Design Specifics */
+      --glitch-red: #ff0055;
+      --glitch-blue: #0088ff;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: rgba(255, 255, 255, 0.9);
+      --accent-primary: #4f46e5;
+      --accent-secondary: #e11d48;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --glass-border: rgba(0, 0, 0, 0.1);
+      --bubble-user: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      --bubble-ai: rgba(241, 245, 249, 0.8);
+    }
+
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(94, 92, 230, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 55, 95, 0.08) 0%, transparent 40%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      color: var(--text-main);
+      transition: background 0.3s;
+      overflow: hidden;
+    }
+    
+    .app-shell {
+      width: 98vw;
+      height: 94vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      background: var(--surface);
+      backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.6s var(--ease), opacity 0.6s var(--ease);
+    }
+
+    /* MOBILE RESPONSIVENESS */
+    @media (max-width: 768px) {
+      body {
+        padding: 0;
+        height: 100dvh; /* Dynamic viewport height for mobile */
+      }
+      .app-shell {
+        grid-template-columns: 1fr;
+        width: 100vw;
+        height: 100dvh;
+        border-radius: 0;
+        border: none;
+      }
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        z-index: 1000;
+        width: 85%;
+        max-width: 320px;
+        transition: left 0.3s var(--ease);
+        background: rgba(10, 10, 10, 0.98);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid var(--glass-border);
+      }
+      .sidebar.open { left: 0; }
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+      }
+      .sidebar.open + .sidebar-overlay,
+      body.sidebar-open .sidebar-overlay { display: block; }
+      .sidebar-toggle {
+        display: flex !important;
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 100;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        padding: 10px;
+        color: white;
+        backdrop-filter: blur(10px);
+      }
+      .chat-header { 
+        padding: 16px 16px 16px 60px; 
+        position: sticky;
+        top: 0;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        z-index: 50;
+      }
+      .chat-main {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .messages {
+        flex: 1;
+        padding: 12px;
+        padding-bottom: 20px;
+      }
+      .bubble {
+        max-width: 85%;
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .input-wrapper {
+        padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        position: sticky;
+        bottom: 0;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+      }
+      .input-bar {
+        padding: 8px 12px;
+        border-radius: 20px;
+      }
+      .input-bar textarea {
+        font-size: 16px; /* Prevent iOS zoom */
+        min-height: 40px;
+      }
+      .btn-send {
+        padding: 10px 20px;
+        font-size: 14px;
+      }
+      .main-frame { 
+        grid-template-columns: 1fr !important; 
+        overflow-y: auto;
+        padding: 12px;
+        gap: 12px;
+      }
+      .neural-panel { 
+        display: none !important; 
+      }
+      /* Mobile call screen - full focus layout */
+      .viewport { 
+        padding: 16px;
+        padding-bottom: 120px; /* Space for controls */
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: center;
+      }
+      .v-header {
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .v-title {
+        text-align: center;
+      }
+      .v-title h1 { 
+        font-size: 1.5rem; 
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+      }
+      .v-meta {
+        text-align: center !important;
+        margin-top: 8px;
+        font-size: 10px !important;
+      }
+      .data-label {
+        font-size: 8px;
+      }
+      /* Voice controls - phone call style */
+      .voice-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        padding-bottom: max(30px, env(safe-area-inset-bottom));
+        gap: 24px;
+        z-index: 100;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+        justify-content: center;
+        border-radius: 0;
+        border: none;
+        backdrop-filter: none;
+      }
+      .btn-v {
+        width: 60px;
+        height: 60px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn-v.end {
+        width: 70px;
+        height: 70px;
+        background: #ef4444;
+      }
+      /* Mobile assistant in main view */
+      .mobile-assistant-container {
+        display: flex !important;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+      /* Viewport mobile assistant - larger and centered */
+      .viewport-assistant-mobile {
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-height: 200px;
+        padding: 20px 0;
+      }
+      .glitch-avatar,
+      .viewport-avatar {
+        width: 180px;
+        height: 180px;
+      }
+      .glitch-avatar .avatar-eye {
+        width: 22px;
+        height: 10px;
+      }
+      .visualizer-stage {
+        display: none;
+      }
+      .spectrogram {
+        display: none;
+      }
+    }
+
+    /* Tablet optimizations */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .app-shell {
+        grid-template-columns: 260px 1fr;
+      }
+      .main-frame {
+        grid-template-columns: 1fr 280px !important;
+      }
+      .neural-panel:first-child {
+        display: none;
+      }
+    }
+
+    /* Small phones */
+    @media (max-width: 380px) {
+      .v-title h1 {
+        font-size: 1.6rem;
+      }
+      .bubble {
+        max-width: 90%;
+        font-size: 14px;
+      }
+      .btn-v {
+        width: 48px;
+        height: 48px;
+      }
+    }
+
+    /* Landscape mobile */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .viewport {
+        padding: 12px;
+        min-height: auto;
+      }
+      .v-title h1 {
+        font-size: 1.5rem;
+      }
+      .glitch-avatar {
+        width: 100px;
+        height: 100px;
+      }
+      .glitch-avatar .avatar-eye {
+        width: 18px;
+        height: 8px;
+      }
+      .voice-controls {
+        bottom: 10px;
+        padding: 8px 16px;
+      }
+      .btn-v {
+        width: 44px;
+        height: 44px;
+      }
+    }
+
+    /* Desktop: hide mobile elements */
+    @media (min-width: 769px) {
+      .mobile-assistant-container { display: none !important; }
+      .sidebar-overlay { display: none !important; }
+      .viewport-assistant-mobile { display: none !important; }
+      .visualizer-stage { display: flex !important; }
+    }
+
+    /* Mobile Assistant Container Styles */
+    .mobile-assistant-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(0, 255, 170, 0.05) 0%, transparent 100%);
+      border-bottom: 1px solid var(--glass-border);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .mobile-assistant-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(94, 92, 230, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .agent-status-mobile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 20px;
+      margin-top: 16px;
+    }
+
+    .sidebar-toggle { display: none; }
+
+    .app-shell.searching { transform: scale(0.95); opacity: 0.5; pointer-events: none; }
+
+    /* SIDEBAR */
+    .sidebar {
+      border-right: 1px solid var(--glass-border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: rgba(0,0,0,0.2);
+      overflow-y: auto;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-primary);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(94, 92, 230, 0.4);
+    }
+
+    .sidebar-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* PRISM DROPDOWN */
+    .dropdown-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-trigger {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      padding: 12px 16px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.3s var(--ease);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dropdown-trigger:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .dropdown-trigger::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      transition: 0.5s var(--ease);
+    }
+
+    .dropdown-trigger:hover::before { left: 100%; }
+
+    .trigger-label { font-size: 13px; font-weight: 500; }
+    .trigger-icon { opacity: 0.4; transition: transform 0.4s var(--ease); }
+    .is-open .trigger-icon { transform: rotate(180deg); }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: rgba(15, 15, 15, 0.98);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+      pointer-events: none;
+      transition: all 0.4s var(--ease);
+      z-index: 100;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .is-open .dropdown-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+
+    .menu-item {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 13px;
+    }
+
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: rgba(255,255,255,0.05); padding-left: 24px; color: var(--accent-primary); }
+    .menu-item .item-meta { font-family: 'JetBrains Mono'; font-size: 9px; opacity: 0.4; text-transform: uppercase; }
+
+    .settings-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .settings-group label:hover { color: var(--text-main); }
+
+    .memory-status {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+    }
+    .memory-status.active { 
+      color: #32d74b; 
+      background: rgba(50, 215, 75, 0.05); 
+      border-color: rgba(50, 215, 75, 0.4);
+      text-shadow: 0 0 10px rgba(50, 215, 75, 0.6);
+      box-shadow: 0 0 15px rgba(50, 215, 75, 0.1);
+    }
+
+    .sessions-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .session-item {
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .session-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(4px); }
+    .session-item.active { background: rgba(94, 92, 230, 0.1); border-color: rgba(94, 92, 230, 0.3); color: var(--text-main); }
+
+    .session-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+    .session-item.active .session-indicator { background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary); }
+
+    /* MAIN CHAT */
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: radial-gradient(circle at top right, rgba(255,255,255,0.02), transparent);
+    }
+
+    .chat-header {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-secondary);
+      background: rgba(255, 55, 95, 0.1);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 55, 95, 0.2);
+    }
+
+    .messages {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+    /* BUBBLES */
+    .bubble-group {
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+    .bubble-group.user { align-self: flex-end; align-items: flex-end; }
+    .bubble-group.assistant { align-self: flex-start; align-items: flex-start; }
+
+    .bubble { padding: 14px 20px; font-size: 15px; line-height: 1.6; position: relative; }
+    .bubble.assistant { background: var(--bubble-ai); border: 1px solid var(--glass-border); border-radius: 4px 20px 20px 20px; color: #e0e0e0; }
+    .bubble.user { background: var(--bubble-user); border-radius: 20px 4px 20px 20px; color: white; box-shadow: 0 10px 30px rgba(94, 92, 230, 0.2); }
+    .bubble.system { background: rgba(255, 171, 0, 0.1); border: 1px solid rgba(255, 171, 0, 0.2); border-radius: 8px; color: #ffab00; font-size: 12px; padding: 8px 12px; align-self: center; }
+
+    .timestamp { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted); margin: 0 4px; display: flex; align-items: center; gap: 8px; }
+
+    .speak-btn { cursor: pointer; opacity: 0.4; transition: opacity 0.2s; background: none; border: none; font-size: 12px; color: var(--text-main); }
+    .speak-btn:hover { opacity: 1; color: var(--accent-primary); }
+
+    /* INPUT AREA */
+    .input-wrapper { padding: 30px 40px; background: linear-gradient(to top, var(--bg) 40%, transparent); }
+    .input-bar { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 6px 8px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
+    .input-bar:focus-within { border-color: var(--accent-primary); background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 4px rgba(94, 92, 230, 0.15); }
+
+    #messageInput { background: transparent; border: none; flex: 1; color: white; font-size: 15px; padding: 10px; outline: none; font-family: inherit; resize: none; max-height: 120px; }
+
+    .btn { height: 38px; padding: 0 16px; border-radius: 14px; border: none; font-family: inherit; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .btn-send { background: var(--accent-primary); color: white; box-shadow: 0 4px 15px rgba(94, 92, 230, 0.3); }
+    .btn-send:hover { background: #6e6cf0; transform: translateY(-1px); }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .loading { display: flex; gap: 4px; padding: 10px; }
+    .loading span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-primary); animation: bounce 1.4s infinite; }
+    @keyframes bounce { 0%, 80%, 100% { opacity: 0.3; transform: scale(1); } 40% { opacity: 1; transform: scale(1.2); } }
+
+    /* --- VOICE INTERFACE (NEURAL INTERACTIVE) --- */
+    #voiceOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease);
+      padding: 40px;
+      overflow: hidden;
+    }
+    #voiceOverlay::before {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                  linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 100;
+    }
+    #voiceOverlay.active { display: flex; opacity: 1; }
+
+    .main-frame {
+      width: 100%; height: 100%;
+      display: grid; grid-template-columns: 280px 1fr 320px; gap: 20px;
+      position: relative; z-index: 10;
+    }
+
+    .neural-panel {
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .neural-panel-header {
+      font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent-tertiary);
+      margin-bottom: 20px; display: flex; justify-content: space-between;
+    }
+
+    .data-row { margin-bottom: 16px; }
+    .data-label { font-family: 'JetBrains Mono'; font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+    .data-value { font-family: 'JetBrains Mono'; font-size: 14px; font-weight: 700; }
+
+    .sys-log {
+      font-family: 'JetBrains Mono'; font-size: 10px; color: #666;
+      height: 200px; overflow: hidden; mask-image: linear-gradient(to bottom, white, transparent);
+    }
+
+    /* CENTER VIEWPORT */
+    .viewport {
+      border: 1px solid var(--glass-border);
+      background: radial-gradient(circle at center, rgba(0, 255, 170, 0.05) 0%, transparent 70%);
+      display: flex; flex-direction: column; padding: 40px; position: relative;
+    }
+
+    .v-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+    .v-title h1 { font-size: 4rem; font-weight: 900; line-height: 0.9; text-transform: uppercase; letter-spacing: -2px; }
+
+    .visualizer-stage { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .v-bar { width: 6px; background: white; transition: height 0.1s ease; filter: drop-shadow(0 0 10px rgba(0, 255, 170, 0.5)); }
+
+    /* GLITCH AGENT - ENHANCED WITH MOUTH & ANIMATED EYES */
+    .agent-container { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .glitch-avatar { 
+      width: 220px; 
+      height: 220px; 
+      position: relative; 
+      transition: transform 0.3s ease-out;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
+      animation: avatar-idle-float 4s ease-in-out infinite;
+    }
+    .glitch-avatar:hover {
+      transform: scale(1.02);
+    }
+    .glitch-avatar:focus {
+      outline: none;
+    }
+    .glitch-avatar:active {
+      outline: none;
+      background: transparent;
+    }
+
+    /* Idle floating animation */
+    @keyframes avatar-idle-float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-3px) rotate(0.5deg); }
+      50% { transform: translateY(-1px) rotate(0deg); }
+      75% { transform: translateY(-4px) rotate(-0.5deg); }
+    }
+    
+    /* Character SVG with rectangular eyes (original style) - no eyes in SVG, we use separate elements */
+    .glitch-layer {
+      position: absolute; inset: 0;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="25" width="60" height="50" fill="none" stroke="white" stroke-width="0.5" rx="5"/></svg>');
+      background-repeat: no-repeat; background-position: center;
+    }
+    .glitch-layer:nth-child(1) { filter: drop-shadow(1px 0 var(--glitch-red)); animation: glitch-idle 6s infinite linear alternate-reverse; }
+    .glitch-layer:nth-child(2) { filter: drop-shadow(-1px 0 var(--glitch-blue)); animation: glitch-idle 4s infinite linear alternate; opacity: 0.4; }
+
+    /* Animated Eyes */
+    .avatar-eye {
+      position: absolute;
+      top: 40%;
+      width: 26px;
+      height: 12px;
+      background: white;
+      border-radius: 2px;
+      z-index: 5;
+      transition: all 0.3s ease;
+    }
+    .avatar-eye.left { left: 27%; }
+    .avatar-eye.right { right: 27%; }
+    
+    /* Eye blink/squint animation - occasionally squints */
+    .glitch-avatar .avatar-eye {
+      animation: eye-life 8s ease-in-out infinite;
+    }
+    .glitch-avatar .avatar-eye.right {
+      animation-delay: 0.1s;
+    }
+    
+    @keyframes eye-life {
+      0%, 40%, 44%, 100% { 
+        height: 12px; 
+        width: 26px;
+        border-radius: 2px;
+      }
+      /* Blink */
+      42% { 
+        height: 2px; 
+        width: 26px;
+        border-radius: 1px;
+      }
+      /* Squint - eyes become horizontal/sleepy */
+      70%, 80% {
+        height: 6px;
+        width: 30px;
+        border-radius: 3px;
+      }
+    }
+
+    /* Mouth element - moved up 3px */
+    .avatar-mouth {
+      position: absolute;
+      bottom: 31%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 4px;
+      background: white;
+      border-radius: 2px;
+      transition: height 0.15s ease, width 0.15s ease;
+      z-index: 5;
+    }
+    .glitch-avatar.talking .avatar-mouth {
+      animation: mouth-talk 0.4s ease-in-out infinite;
+    }
+
+    /* Slower, more natural mouth movement */
+    @keyframes mouth-talk {
+      0%, 100% { height: 4px; width: 20px; border-radius: 2px; }
+      30% { height: 10px; width: 16px; border-radius: 40%; }
+      60% { height: 6px; width: 22px; border-radius: 3px; }
+      85% { height: 12px; width: 14px; border-radius: 50%; }
+    }
+
+    /* Calmer idle glitch */
+    @keyframes glitch-idle {
+      0%, 100% { clip-path: inset(0); transform: translate(0, 0); }
+      50% { clip-path: inset(0); transform: translate(0.5px, 0); }
+    }
+
+    /* Subtle hover */
+    @keyframes avatar-hover {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    /* TALKING ANIMATION - Calmer, focused on glow */
+    .glitch-avatar.talking {
+      animation: avatar-talk-calm 0.5s ease-in-out infinite alternate;
+    }
+    .glitch-avatar.talking .glitch-layer:nth-child(1) {
+      animation: glitch-talk-subtle 0.3s infinite linear alternate-reverse;
+    }
+    .glitch-avatar.talking .glitch-layer:nth-child(2) {
+      animation: glitch-talk-subtle 0.25s infinite linear alternate;
+    }
+
+    @keyframes avatar-talk-calm {
+      0% { 
+        transform: scale(1);
+        filter: brightness(1) drop-shadow(0 0 10px rgba(0, 255, 170, 0.3));
+      }
+      100% { 
+        transform: scale(1.01);
+        filter: brightness(1.05) drop-shadow(0 0 20px rgba(0, 255, 170, 0.5));
+      }
+    }
+
+    @keyframes glitch-talk-subtle {
+      0% { transform: translate(-1px, 0); }
+      50% { transform: translate(1px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* GIGGLE animation - playful wobble */
+    .glitch-avatar.shake,
+    .glitch-avatar.giggle {
+      animation: avatar-giggle 0.5s ease-in-out !important;
+    }
+
+    @keyframes avatar-giggle {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      10% { transform: translateY(-2px) rotate(-3deg) scale(1.02); }
+      20% { transform: translateY(0) rotate(3deg) scale(1); }
+      30% { transform: translateY(-3px) rotate(-2deg) scale(1.03); }
+      40% { transform: translateY(0) rotate(2deg) scale(1); }
+      50% { transform: translateY(-2px) rotate(-1deg) scale(1.02); }
+      60% { transform: translateY(0) rotate(1deg) scale(1); }
+      70% { transform: translateY(-1px) rotate(-0.5deg) scale(1.01); }
+      80% { transform: translateY(0) rotate(0.5deg) scale(1); }
+      90% { transform: translateY(-0.5px) rotate(0deg) scale(1); }
+    }
+
+    /* Happy mouth during giggle */
+    .glitch-avatar.giggle .avatar-mouth {
+      height: 8px;
+      width: 14px;
+      border-radius: 0 0 10px 10px;
+    }
+
+    /* LISTENING state - very subtle with idle float */
+    .glitch-avatar.listening {
+      animation: avatar-listen 3s ease-in-out infinite;
+    }
+
+    @keyframes avatar-listen {
+      0%, 100% { 
+        transform: translateY(0);
+        filter: brightness(1) drop-shadow(0 0 5px rgba(94, 92, 230, 0.3));
+      }
+      50% { 
+        transform: translateY(-3px);
+        filter: brightness(1.02) drop-shadow(0 0 15px rgba(94, 92, 230, 0.5));
+      }
+    }
+
+    /* PROCESSING state - subtle pulse */
+    .glitch-avatar.processing {
+      animation: avatar-process 1s ease-in-out infinite;
+    }
+
+    @keyframes avatar-process {
+      0%, 100% { 
+        filter: brightness(1) drop-shadow(0 0 5px rgba(255, 170, 0, 0.3));
+      }
+      50% { 
+        filter: brightness(1.1) drop-shadow(0 0 20px rgba(255, 170, 0, 0.6));
+      }
+    }
+
+    /* Glow effect when active */
+    .glitch-avatar.active-glow::after {
+      content: '';
+      position: absolute;
+      inset: -20px;
+      background: radial-gradient(circle, rgba(0, 255, 170, 0.2) 0%, transparent 70%);
+      animation: glow-pulse 3s ease-in-out infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    .voice-controls {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 20px; padding: 12px 30px; background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 100px;
+    }
+
+    .btn-v {
+      width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--glass-border);
+      background: transparent; color: white; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.3s;
+    }
+    .btn-v:hover { background: white; color: black; transform: translateY(-2px); }
+    .btn-v.end { background: #ef4444; border: none; }
+    .btn-v.end:hover { background: #f87171; color: white; }
+
+    .spectrogram { position: absolute; bottom: 0; left: 0; width: 100%; height: 100px; opacity: 0.2; pointer-events: none; }
+
+    .status-dot { width: 8px; height: 8px; background: var(--accent-tertiary); border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 10px var(--accent-tertiary); animation: vpulse 1s infinite alternate; }
+    @keyframes vpulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+    .distort { position: absolute; width: 0; height: 0; }
+  </style>
+</head>
+<body>
+  <svg class="distort">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="3" stitchTiles="stitch" />
+      <feDisplacementMap in="SourceGraphic" scale="5" />
+    </filter>
+  </svg>
+
+  <div class="app-shell" id="mainShell">
+    <!-- MOBILE SIDEBAR TOGGLE -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <!-- SIDEBAR OVERLAY (mobile) -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-icon"></div>
+        LUX.UX
+      </div>
+
+      <div class="sidebar-header">
+        <span>Settings & Core</span>
+        <span onclick="toggleTheme()" style="cursor:pointer; opacity:0.6;">🌓</span>
+      </div>
+      
+      <div class="settings-group">
+        <div class="dropdown-container" id="providerDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('providerDropdown')">
+            <span class="trigger-label" id="providerLabel">NVIDIA (Kimi K2.5)</span>
+            <svg class="trigger-icon" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
+          </div>
+          <div class="dropdown-menu">
+            <div class="menu-item" onclick="selectProvider('nvidia', 'NVIDIA (Kimi K2.5)')"><span>NVIDIA (Kimi K2.5)</span><span class="item-meta">Primary</span></div>
+            <div class="menu-item" onclick="selectProvider('github', 'GitHub Copilot')"><span>GitHub Copilot</span><span class="item-meta">GPT-4o</span></div>
+            <div class="menu-item" onclick="selectProvider('gemini', 'Google Gemini')"><span>Google Gemini</span><span class="item-meta">2.5 Flash</span></div>
+          </div>
+        </div>
+
+        <div class="dropdown-container" id="voiceDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('voiceDropdown')">
+            <span class="trigger-label" id="voiceLabel">Voice: Kore</span>
+            <svg class="trigger-icon" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
+          </div>
+          <div class="dropdown-menu" style="max-height: 300px; overflow-y: auto;">
+            <div style="padding: 6px 12px; font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Popular</div>
+            <div class="menu-item" onclick="selectVoice('Kore')"><span>Kore</span><span class="item-meta">Firm</span></div>
+            <div class="menu-item" onclick="selectVoice('Puck')"><span>Puck</span><span class="item-meta">Cheerful</span></div>
+            <div class="menu-item" onclick="selectVoice('Charon')"><span>Charon</span><span class="item-meta">Informative</span></div>
+            <div class="menu-item" onclick="selectVoice('Zephyr')"><span>Zephyr</span><span class="item-meta">Bright</span></div>
+            <div class="menu-item" onclick="selectVoice('Fenrir')"><span>Fenrir</span><span class="item-meta">Excitable</span></div>
+            <div style="padding: 6px 12px; font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid var(--glass-border); margin-top: 4px;">More Voices</div>
+            <div class="menu-item" onclick="selectVoice('Aoede')"><span>Aoede</span><span class="item-meta">Breezy</span></div>
+            <div class="menu-item" onclick="selectVoice('Leda')"><span>Leda</span><span class="item-meta">Youthful</span></div>
+            <div class="menu-item" onclick="selectVoice('Orus')"><span>Orus</span><span class="item-meta">Firm</span></div>
+            <div class="menu-item" onclick="selectVoice('Callirrhoe')"><span>Callirrhoe</span><span class="item-meta">Relaxed</span></div>
+            <div class="menu-item" onclick="selectVoice('Autonoe')"><span>Autonoe</span><span class="item-meta">Bright</span></div>
+            <div class="menu-item" onclick="selectVoice('Enceladus')"><span>Enceladus</span><span class="item-meta">Breathy</span></div>
+            <div class="menu-item" onclick="selectVoice('Iapetus')"><span>Iapetus</span><span class="item-meta">Clear</span></div>
+            <div class="menu-item" onclick="selectVoice('Umbriel')"><span>Umbriel</span><span class="item-meta">Easy-going</span></div>
+            <div class="menu-item" onclick="selectVoice('Algieba')"><span>Algieba</span><span class="item-meta">Smooth</span></div>
+            <div class="menu-item" onclick="selectVoice('Despina')"><span>Despina</span><span class="item-meta">Smooth</span></div>
+            <div class="menu-item" onclick="selectVoice('Erinome')"><span>Erinome</span><span class="item-meta">Clear</span></div>
+            <div class="menu-item" onclick="selectVoice('Algenib')"><span>Algenib</span><span class="item-meta">Gravelly</span></div>
+            <div class="menu-item" onclick="selectVoice('Rasalgethi')"><span>Rasalgethi</span><span class="item-meta">Informative</span></div>
+            <div class="menu-item" onclick="selectVoice('Laomedeia')"><span>Laomedeia</span><span class="item-meta">Cheerful</span></div>
+            <div class="menu-item" onclick="selectVoice('Achernar')"><span>Achernar</span><span class="item-meta">Soft</span></div>
+            <div class="menu-item" onclick="selectVoice('Alnilam')"><span>Alnilam</span><span class="item-meta">Firm</span></div>
+            <div class="menu-item" onclick="selectVoice('Schedar')"><span>Schedar</span><span class="item-meta">Even</span></div>
+            <div class="menu-item" onclick="selectVoice('Gacrux')"><span>Gacrux</span><span class="item-meta">Mature</span></div>
+            <div class="menu-item" onclick="selectVoice('Pulcherrima')"><span>Pulcherrima</span><span class="item-meta">Forward</span></div>
+            <div class="menu-item" onclick="selectVoice('Achird')"><span>Achird</span><span class="item-meta">Friendly</span></div>
+            <div class="menu-item" onclick="selectVoice('Zubenelgenubi')"><span>Zubenelgenubi</span><span class="item-meta">Casual</span></div>
+            <div class="menu-item" onclick="selectVoice('Vindemiatrix')"><span>Vindemiatrix</span><span class="item-meta">Gentle</span></div>
+            <div class="menu-item" onclick="selectVoice('Sadachbia')"><span>Sadachbia</span><span class="item-meta">Lively</span></div>
+            <div class="menu-item" onclick="selectVoice('Sadaltager')"><span>Sadaltager</span><span class="item-meta">Knowledgeable</span></div>
+            <div class="menu-item" onclick="selectVoice('Sulafat')"><span>Sulafat</span><span class="item-meta">Warm</span></div>
+          </div>
+        </div>
+
+        <select id="providerSelect" style="display:none;"><option value="nvidia">nvidia</option><option value="github">github</option><option value="gemini">gemini</option></select>
+
+        <label><input type="checkbox" id="ttsToggle"> Auto-Speak</label>
+        <label style="color:var(--accent-secondary); font-weight:bold; cursor:pointer;" onclick="toggleVoiceMode()">🎙️ LUX</label>
+        <label><input type="checkbox" id="memoryToggle" checked> Enable Memory</label>
+
+        <div class="memory-status" id="memoryStatus">Initializing...</div>
+      </div>
+
+      <div class="sidebar-header" style="margin-top: 16px;">
+        <span>🔍 Semantic Search</span>
+        <span id="embedCount" style="font-size: 10px; opacity: 0.6;">0</span>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="searchInput" placeholder="Search memories..." 
+                 style="flex:1; padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); font-size: 12px;">
+          <button onclick="semanticSearch()" style="padding: 8px 12px; background: var(--accent-primary); border: none; border-radius: 8px; color: #000; cursor: pointer; font-weight: 600;">
+            🔎
+          </button>
+        </div>
+        <div id="searchResults" style="max-height: 200px; overflow-y: auto; margin-top: 8px; font-size: 11px;"></div>
+      </div>
+
+      <div class="sidebar-header">Active Sessions</div>
+      <div class="sessions-list" id="sessionsList"></div>
+
+      <div style="margin-top:auto;">
+        <button onclick="clearCurrentSession()" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-muted); cursor:pointer; font-size:12px;">Clear History</button>
+        <a href="/admin/dashboard" target="_blank" style="display:block; text-align:center; margin-top:10px; font-size:10px; color:var(--accent-primary); text-decoration:none; text-transform:uppercase; letter-spacing:1px; font-family:'JetBrains Mono';">Admin Terminal ↗</a>
+      </div>
+    </aside>
+
+    <main class="chat-main">
+      <header class="chat-header">
+        <div>
+          <h2 style="font-size: 16px; font-weight: 700;" id="currentSessionTitle">LUX Command Bridge</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Neural bridge established</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="status-badge">Live Encrypted</div>
+        </div>
+      </header>
+      
+      <!-- MOBILE ASSISTANT (shown during voice mode on mobile) -->
+      <div class="mobile-assistant-container" id="mobileAssistant" style="display: none;">
+        <div style="text-align: center;">
+          <div class="glitch-avatar" id="mobileGlitchAvatar">
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer" style="opacity: 0.2; filter: blur(5px)"></div>
+            <div class="avatar-eye left"></div>
+            <div class="avatar-eye right"></div>
+            <div class="avatar-mouth"></div>
+          </div>
+          <div class="agent-status-mobile">
+            <div class="status-dot"></div>
+            <span style="font-family: 'JetBrains Mono'; font-size: 12px; font-weight: bold;" id="mobileAgentStatus">READY</span>
+          </div>
+        </div>
+      </div>
+      
+      <section class="messages" id="messages"></section>
+      <div class="status" id="status" style="font-family:'JetBrains Mono'; font-size:10px; opacity:0.5; text-align:center; padding:10px;"></div>
+      
+      <div class="input-wrapper">
+        <div class="input-bar">
+          <textarea id="messageInput" placeholder="Type a message... (Ctrl+Enter)" rows="1"></textarea>
+          <div style="display:flex; gap:8px; padding-right:8px;">
+            <button class="btn btn-send" id="sendBtn">Send</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- VOICE INTERFACE OVERLAY (NEURAL INTERACTIVE) -->
+  <div id="voiceOverlay">
+    <div class="main-frame">
+      <!-- LEFT: TELEMETRY -->
+      <aside class="neural-panel">
+        <div class="neural-panel-header"><span>Signal Telemetry</span><span>[01]</span></div>
+        <div class="data-row"><div class="data-label">DB LEVEL</div><div class="data-value" id="dbLevel">-0.00 dB</div></div>
+        <div class="data-row"><div class="data-label">ENTROPY</div><div class="data-value" id="entropyVal">0.000</div></div>
+        <div class="data-row" style="margin-top: 20px;">
+          <div class="data-label">SYSTEM_LOG</div>
+          <div class="sys-log" id="sys-log">
+            > Initializing LUX.LIVE...<br>
+            > Encrypting neural link...<br>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER: VIEWPORT -->
+      <section class="viewport">
+        <div class="v-header">
+          <div class="v-title">
+            <div class="data-label">ACTIVE_LISTENER_MODE</div>
+            <h1>REACTIVE<br><span style="color: var(--accent-tertiary)">NEURAL</span></h1>
+          </div>
+          <div class="v-meta" style="text-align: right; font-family: 'JetBrains Mono'; font-size: 12px;">
+            LUX_OS // BUILD 4.2.0<br><span id="v-timestamp">00:00:00.00</span>
+          </div>
+        </div>
+
+        <!-- MOBILE VIEWPORT ASSISTANT (shown in center on mobile) -->
+        <div class="viewport-assistant-mobile" id="viewportAssistantMobile">
+          <div class="glitch-avatar viewport-avatar" id="viewportGlitchAvatar">
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer" style="opacity: 0.2; filter: blur(5px)"></div>
+            <div class="avatar-eye left"></div>
+            <div class="avatar-eye right"></div>
+            <div class="avatar-mouth"></div>
+          </div>
+          <div style="margin-top: 20px; text-align: center;">
+            <div class="status-dot"></div>
+            <span style="font-family: 'JetBrains Mono'; font-size: 13px; font-weight: bold;" id="viewportAgentStatus">READY</span>
+          </div>
+        </div>
+
+        <div class="visualizer-stage" id="visualizer"></div>
+
+        <svg class="spectrogram" viewBox="0 0 1000 100" preserveAspectRatio="none">
+          <path d="M0 50 Q 250 10 500 50 T 1000 50" fill="none" stroke="var(--accent-tertiary)" stroke-width="1" id="wavepath" />
+        </svg>
+
+        <div class="voice-controls">
+          <button class="btn-v" title="Mute"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v4M12 19v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M1 12h4M19 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg></button>
+          <button class="btn-v end" onclick="toggleVoiceMode()" title="End Call"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect></svg></button>
+          <button class="btn-v" title="Node"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></button>
+        </div>
+      </section>
+
+      <!-- RIGHT: AGENT -->
+      <aside class="neural-panel">
+        <div class="neural-panel-header"><span>Agent Identity</span><span>LUX</span></div>
+        <div class="agent-container">
+          <div class="glitch-avatar" id="glitchAvatar">
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer"></div>
+            <div class="glitch-layer" style="opacity: 0.2; filter: blur(5px)"></div>
+            <div class="avatar-eye left"></div>
+            <div class="avatar-eye right"></div>
+            <div class="avatar-mouth"></div>
+          </div>
+          <div style="margin-top: 20px; text-align: center;">
+            <div class="status-dot"></div>
+            <span style="font-family: 'JetBrains Mono'; font-size: 13px; font-weight: bold;" id="agentStatus">READY</span>
+          </div>
+        </div>
+        <div class="data-row" style="border-top: 1px solid var(--glass-border); padding-top: 20px;">
+          <div class="data-label">ENGINE</div><div class="data-value" style="font-size: 11px; color: var(--accent-tertiary);">GEMINI_2.5_LIVE</div>
+        </div>
+        <div class="data-row"><div class="data-label">BIAS</div><div class="data-value" style="font-size: 11px;">PROACTIVE_SYNTHESIS</div></div>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module">
+    import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai';
+
+    // Global voice selection
+    let selectedVoiceName = 'Kore';
+
+    class VoiceManager {
+      constructor() {
+        this.audioContext = null;
+        this.nextStartTime = 0;
+        this.liveSession = null;
+        this.stream = null;
+        this.processor = null;
+        this.activeSources = [];
+        this.onVolumeChange = null;
+      }
+
+      async init() {
+        try {
+          if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+          }
+          if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+          }
+          console.log('[VoiceManager] AudioContext state:', this.audioContext.state);
+        } catch (err) {
+          console.error('[VoiceManager] AudioContext init failed:', err);
+          throw err;
+        }
+      }
+
+      async checkMicrophonePermission() {
+        try {
+          // Check if we're on HTTPS or localhost (required for getUserMedia)
+          const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+          if (!isSecure) {
+            console.warn('[VoiceManager] WARNING: Not on HTTPS. Microphone may not work on mobile.');
+            // Try anyway - might work on some browsers/configs
+          }
+          
+          // Check permissions API if available
+          if (navigator.permissions) {
+            const result = await navigator.permissions.query({ name: 'microphone' });
+            console.log('[VoiceManager] Microphone permission:', result.state);
+            return result.state !== 'denied';
+          }
+          return true;
+        } catch (err) {
+          console.log('[VoiceManager] Permissions API not available, will try getUserMedia directly');
+          return true;
+        }
+      }
+
+      async getConfig() {
+        const res = await fetch('/api/config');
+        return await res.json();
+      }
+
+      playPcmChunk(base64Data) {
+        if (!this.audioContext) return;
+        const binaryData = atob(base64Data);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) bytes[i] = binaryData.charCodeAt(i);
+        const pcmData = new Int16Array(bytes.buffer);
+        const float32Data = new Float32Array(pcmData.length);
+        let sum = 0;
+        for (let i = 0; i < pcmData.length; i++) {
+          const val = pcmData[i] / 32768.0;
+          float32Data[i] = val;
+          sum += Math.abs(val);
+        }
+        if (this.onVolumeChange) this.onVolumeChange((sum / pcmData.length) * 100);
+
+        // Trigger avatar talking animation when audio is playing
+        if (typeof avatarAnimator !== 'undefined' && isVoiceMode) {
+          avatarAnimator.setState('talking');
+          isAITalking = true;
+        }
+
+        const audioBuffer = this.audioContext.createBuffer(1, float32Data.length, 24000);
+        audioBuffer.getChannelData(0).set(float32Data);
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.audioContext.destination);
+        const startTime = Math.max(this.nextStartTime, this.audioContext.currentTime);
+        source.start(startTime);
+        this.nextStartTime = startTime + audioBuffer.duration;
+        this.activeSources.push(source);
+        source.onended = () => { 
+          this.activeSources = this.activeSources.filter(s => s !== source);
+          // When all audio finishes, return to listening state
+          if (this.activeSources.length === 0 && typeof avatarAnimator !== 'undefined' && isVoiceMode) {
+            setTimeout(() => {
+              if (isVoiceMode && this.activeSources.length === 0) {
+                avatarAnimator.setState('listening');
+                isAITalking = false;
+              }
+            }, 200);
+          }
+        };
+      }
+
+      async speak(text) {
+        if (!text.trim()) return;
+        await this.init();
+        this.nextStartTime = this.audioContext.currentTime;
+        try {
+          const config = await this.getConfig();
+          const ai = new GoogleGenAI({ apiKey: config.gemini_api_key });
+          console.log('[VoiceManager] TTS using voice:', selectedVoiceName);
+          const responseStream = await ai.models.generateContentStream({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text: `Speak: ${text}` }] }],
+            config: {
+              responseModalities: [Modality.AUDIO],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoiceName } } },
+            },
+          });
+          for await (const chunk of responseStream) {
+            const data = chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            if (data) this.playPcmChunk(data);
+          }
+        } catch (err) { console.error('TTS Error:', err); }
+      }
+
+      async startLive(onMessage, onStatus) {
+        try {
+          // Check microphone permission first
+          const hasMicPermission = await this.checkMicrophonePermission();
+          if (!hasMicPermission) {
+            onStatus('MIC_PERMISSION_DENIED');
+            alert('Microphone permission is denied. Please enable it in your browser settings.');
+            return;
+          }
+
+          await this.init();
+          const config = await this.getConfig();
+          
+          if (!config.gemini_api_key) {
+            onStatus('NO_API_KEY');
+            console.error('[VoiceManager] No Gemini API key configured');
+            return;
+          }
+          
+          const ai = new GoogleGenAI({ apiKey: config.gemini_api_key });
+          onStatus('NEURAL_LINK_STABILIZING');
+          console.log('[VoiceManager] Connecting to Gemini Live...');
+          
+          this.liveSession = await ai.live.connect({
+            model: "gemini-2.5-flash-native-audio-latest",
+            callbacks: {
+              onopen: () => { 
+                console.log('[VoiceManager] Connection opened, starting mic...');
+                onStatus('UPLINK_ESTABLISHED'); 
+                this.startMic().catch(err => {
+                  console.error('[VoiceManager] Mic start failed:', err);
+                  onStatus('MIC_ERROR');
+                  alert('Could not access microphone: ' + err.message);
+                });
+              },
+              onmessage: (msg) => {
+                if (msg.serverContent?.modelTurn?.parts) {
+                  for (const part of msg.serverContent.modelTurn.parts) {
+                    if (part.inlineData) this.playPcmChunk(part.inlineData.data);
+                    if (part.text) onMessage(part.text);
+                  }
+                }
+                if (msg.serverContent?.interrupted) this.stop();
+              },
+              onclose: () => {
+                console.log('[VoiceManager] Connection closed');
+                onStatus('TERMINATED');
+              },
+              onerror: (e) => {
+                console.error('[VoiceManager] Connection error:', e);
+                onStatus('ERROR');
+              }
+            },
+            config: {
+              responseModalities: [Modality.AUDIO],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: selectedVoiceName } } },
+            }
+          });
+          console.log('[VoiceManager] Live session started with voice:', selectedVoiceName);
+        } catch (err) {
+          console.error('[VoiceManager] startLive failed:', err);
+          onStatus('CONNECTION_FAILED');
+          alert('Failed to start live chat: ' + err.message);
+        }
+      }
+
+      async startMic() {
+        console.log('[VoiceManager] Requesting microphone access...');
+        
+        try {
+          this.stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } 
+          });
+          console.log('[VoiceManager] Microphone access granted');
+        } catch (err) {
+          console.error('[VoiceManager] getUserMedia failed:', err);
+          if (err.name === 'NotAllowedError') {
+            throw new Error('Microphone permission denied. Please allow microphone access.');
+          } else if (err.name === 'NotFoundError') {
+            throw new Error('No microphone found on this device.');
+          } else if (err.name === 'NotSupportedError') {
+            throw new Error('Microphone not supported. Make sure you are using HTTPS.');
+          } else {
+            throw err;
+          }
+        }
+
+        const source = this.audioContext.createMediaStreamSource(this.stream);
+        this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+        source.connect(this.processor);
+        this.processor.connect(this.audioContext.destination);
+        this.processor.onaudioprocess = (e) => {
+          const input = e.inputBuffer.getChannelData(0);
+          const pcm = new Int16Array(input.length);
+          let sum = 0;
+          for (let i = 0; i < input.length; i++) {
+            const val = Math.min(1, input[i]);
+            pcm[i] = val * 0x7FFF;
+            sum += Math.abs(val);
+          }
+          if (this.onVolumeChange) this.onVolumeChange((sum / input.length) * 100);
+          if (this.liveSession) this.liveSession.sendRealtimeInput({ media: { data: btoa(String.fromCharCode(...new Uint8Array(pcm.buffer))), mimeType: 'audio/pcm;rate=24000' } });
+        };
+        console.log('[VoiceManager] Microphone streaming started');
+      }
+
+      stop() { this.activeSources.forEach(s => { try{s.stop()}catch(e){} }); this.activeSources = []; }
+      stopLive() {
+        if (this.liveSession) this.liveSession.close();
+        if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+        if (this.processor) this.processor.disconnect();
+        this.stop();
+      }
+    }
+
+    const voice = new VoiceManager();
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const sessionsList = document.getElementById('sessionsList');
+    const mainShell = document.getElementById('mainShell');
+    const voiceOverlay = document.getElementById('voiceOverlay');
+    const visualizer = document.getElementById('visualizer');
+    const sysLog = document.getElementById('sys-log');
+    const sidebar = document.getElementById('sidebar');
+    const mobileAssistant = document.getElementById('mobileAssistant');
+    const mobileGlitchAvatar = document.getElementById('mobileGlitchAvatar');
+    const glitchAvatar = document.getElementById('glitchAvatar');
+    
+    let currentSessionId = 'default';
+    let isVoiceMode = false;
+    let isMobile = false;
+    let isAITalking = false;
+
+    // --- DEVICE DETECTION ---
+    function detectDevice() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const mobileKeywords = ['android', 'webos', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'];
+      const isMobileUA = mobileKeywords.some(keyword => userAgent.includes(keyword));
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      
+      isMobile = isMobileUA || (isTouchDevice && isSmallScreen);
+      
+      document.body.classList.toggle('is-mobile', isMobile);
+      document.body.classList.toggle('is-desktop', !isMobile);
+      document.body.classList.toggle('is-touch', isTouchDevice);
+      
+      console.log(`Device: ${isMobile ? 'Mobile' : 'Desktop'}, Touch: ${isTouchDevice}, Width: ${window.innerWidth}`);
+      
+      // Adjust UI based on device
+      if (isMobile) {
+        messageInput.placeholder = 'Type a message...';
+      } else {
+        messageInput.placeholder = 'Type a message... (Ctrl+Enter)';
+      }
+      
+      return isMobile;
+    }
+
+    // Run on load and resize
+    detectDevice();
+    window.addEventListener('resize', () => {
+      clearTimeout(window.resizeTimer);
+      window.resizeTimer = setTimeout(detectDevice, 250);
+    });
+
+    // --- SIDEBAR TOGGLE (Mobile) ---
+    window.toggleSidebar = () => {
+      sidebar.classList.toggle('open');
+      document.body.classList.toggle('sidebar-open');
+    };
+
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+      if (isMobile && sidebar.classList.contains('open')) {
+        if (!sidebar.contains(e.target) && !e.target.closest('.sidebar-toggle')) {
+          sidebar.classList.remove('open');
+          document.body.classList.remove('sidebar-open');
+        }
+      }
+    });
+
+    // --- AVATAR ANIMATION CONTROLLER ---
+    const viewportGlitchAvatar = document.getElementById('viewportGlitchAvatar');
+    
+    class AvatarAnimator {
+      constructor() {
+        this.avatars = [glitchAvatar, mobileGlitchAvatar, viewportGlitchAvatar].filter(Boolean);
+        this.state = 'ready';
+      }
+
+      setState(state) {
+        this.state = state;
+        this.avatars.forEach(avatar => {
+          if (!avatar) return;
+          // Clear all states
+          avatar.classList.remove('talking', 'listening', 'processing', 'shake', 'active-glow');
+          
+          switch(state) {
+            case 'talking':
+              avatar.classList.add('talking', 'active-glow');
+              break;
+            case 'listening':
+              avatar.classList.add('listening', 'active-glow');
+              break;
+            case 'processing':
+              avatar.classList.add('processing');
+              break;
+            case 'shake':
+            case 'giggle':
+              avatar.classList.add('giggle');
+              setTimeout(() => avatar.classList.remove('giggle'), 500);
+              break;
+            case 'ready':
+            default:
+              // Default state - idle float animation
+              break;
+          }
+        });
+        
+        // Update status text on all status elements
+        const statusText = {
+          'talking': 'SPEAKING',
+          'listening': 'LISTENING',
+          'processing': 'THINKING',
+          'ready': 'READY'
+        };
+        const status = statusText[state] || 'READY';
+        ['agentStatus', 'mobileAgentStatus', 'viewportAgentStatus'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = status;
+        });
+      }
+
+      shake() {
+        this.giggle();
+      }
+
+      giggle() {
+        this.avatars.forEach(avatar => {
+          if (!avatar) return;
+          avatar.classList.add('giggle');
+          setTimeout(() => avatar.classList.remove('giggle'), 500);
+        });
+      }
+
+      pulse() {
+        this.avatars.forEach(avatar => {
+          if (!avatar) return;
+          avatar.style.transform = 'scale(1.1)';
+          setTimeout(() => avatar.style.transform = '', 150);
+        });
+      }
+    }
+
+    const avatarAnimator = new AvatarAnimator();
+
+    // --- NEURAL INTERACTIVE UI LOGIC ---
+    const barCount = 64;
+    const bars = [];
+    for(let i=0; i < barCount; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'v-bar';
+      bar.style.height = '5px';
+      bar.style.opacity = 0.2 + (i / barCount) * 0.8;
+      visualizer.appendChild(bar);
+      bars.push(bar);
+    }
+
+    let volume = 0;
+    voice.onVolumeChange = (v) => { if(isVoiceMode) volume = v; };
+
+    function animateNeural() {
+      if (isVoiceMode) {
+        // Update Bars
+        bars.forEach((bar, i) => {
+          const noise = Math.sin(Date.now() * (0.05 + i * 0.01)) * (volume/2) + Math.random() * (volume/4);
+          const baseHeight = 5 + (Math.sin(Date.now() * 0.002 + i * 0.1) * (volume + 10));
+          const finalHeight = Math.max(2, baseHeight + noise);
+          bar.style.height = `${finalHeight}px`;
+          bar.style.background = finalHeight > 60 ? 'var(--accent-tertiary)' : (finalHeight > 30 ? 'white' : 'rgba(255,255,255,0.3)');
+        });
+
+        // Update Wavepath
+        const path = document.getElementById('wavepath');
+        let d = "M0 50 ";
+        for(let x=0; x<=1000; x+=50) {
+          const y = 50 + Math.sin(Date.now() * 0.01 + x * 0.01) * (volume/2);
+          d += `L${x} ${y} `;
+        }
+        path.setAttribute('d', d);
+
+        // Update Stats
+        document.getElementById('dbLevel').innerText = `-${(40 - volume/2.5).toFixed(2)} dB`;
+        document.getElementById('entropyVal').innerText = (0.5 + volume/200).toFixed(3);
+        document.getElementById('v-timestamp').innerText = new Date().toLocaleTimeString() + '.' + Math.floor(Date.now()%1000/10);
+        document.getElementById('agentStatus').innerText = volume > 5 ? "SPEAKING..." : "LISTENING...";
+      }
+      requestAnimationFrame(animateNeural);
+    }
+    animateNeural();
+
+    setInterval(() => {
+      if(!isVoiceMode) return;
+      const logs = ["> Signal burst detected...", "> Analyzing frequency peaks...", "> Decrypting packet...", "> Feed optimized.", "> Sub-bass resonance found."];
+      const entry = document.createElement('div');
+      entry.innerHTML = logs[Math.floor(Math.random() * logs.length)];
+      sysLog.prepend(entry);
+      if(sysLog.children.length > 15) sysLog.lastChild.remove();
+    }, 2000);
+
+    window.toggleVoiceMode = async () => {
+      isVoiceMode = !isVoiceMode;
+      if (isVoiceMode) {
+        mainShell.classList.add('searching');
+        voiceOverlay.style.display = 'flex';
+        setTimeout(() => voiceOverlay.classList.add('active'), 10);
+        
+        // Show mobile assistant in main view on mobile
+        if (isMobile && mobileAssistant) {
+          mobileAssistant.style.display = 'flex';
+        }
+        
+        avatarAnimator.setState('processing');
+        
+        // Update system log with connection status
+        const addSysLog = (msg) => {
+          const entry = document.createElement('div');
+          entry.innerHTML = `> ${msg}`;
+          sysLog.prepend(entry);
+        };
+        
+        addSysLog('Initializing voice connection...');
+        
+        voice.startLive(
+          (text) => {
+            // AI is responding with text
+            avatarAnimator.setState('talking');
+            isAITalking = true;
+            addMessage(text, 'assistant');
+            
+            // Stop talking animation after a delay
+            clearTimeout(window.talkingTimeout);
+            window.talkingTimeout = setTimeout(() => {
+              if (isVoiceMode) {
+                avatarAnimator.setState('listening');
+                isAITalking = false;
+              }
+            }, 500);
+          }, 
+          (status) => {
+            console.log('Voice status:', status);
+            addSysLog(status.replace(/_/g, ' '));
+            
+            if (status === 'UPLINK_ESTABLISHED') {
+              avatarAnimator.setState('listening');
+              avatarAnimator.shake();
+            } else if (status === 'NEURAL_LINK_STABILIZING') {
+              avatarAnimator.setState('processing');
+            } else if (status === 'ERROR' || status === 'MIC_ERROR' || status === 'CONNECTION_FAILED') {
+              avatarAnimator.setState('ready');
+              // Auto-exit voice mode on error
+              setTimeout(() => {
+                if (isVoiceMode) {
+                  isVoiceMode = false;
+                  voiceOverlay.classList.remove('active');
+                  mainShell.classList.remove('searching');
+                  setTimeout(() => voiceOverlay.style.display = 'none', 500);
+                  if (mobileAssistant) mobileAssistant.style.display = 'none';
+                }
+              }, 2000);
+            } else if (status === 'TERMINATED') {
+              avatarAnimator.setState('ready');
+            }
+          }
+        );
+      } else {
+        voiceOverlay.classList.remove('active');
+        mainShell.classList.remove('searching');
+        setTimeout(() => voiceOverlay.style.display = 'none', 500);
+        
+        // Hide mobile assistant
+        if (mobileAssistant) {
+          mobileAssistant.style.display = 'none';
+        }
+        
+        avatarAnimator.setState('ready');
+        voice.stopLive();
+      }
+    };
+
+    // Parallax Cursor for Glitch Avatar (desktop only)
+    document.addEventListener('mousemove', (e) => {
+      if(!isVoiceMode || isMobile || isAITalking) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 20;
+      const y = (e.clientY / window.innerHeight - 0.5) * 20;
+      const avatar = document.getElementById('glitchAvatar');
+      if (avatar && !avatar.classList.contains('talking')) {
+        avatar.style.transform = `translate(${x}px, ${y}px)`;
+      }
+    });
+
+    // Touch interaction for mobile avatar - giggle on touch
+    if (mobileGlitchAvatar) {
+      mobileGlitchAvatar.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        avatarAnimator.giggle();
+      }, { passive: false });
+    }
+    if (glitchAvatar) {
+      glitchAvatar.addEventListener('click', () => {
+        avatarAnimator.giggle();
+      });
+      glitchAvatar.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        avatarAnimator.giggle();
+      }, { passive: false });
+    }
+    // Viewport avatar touch
+    if (viewportGlitchAvatar) {
+      viewportGlitchAvatar.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        avatarAnimator.giggle();
+      }, { passive: false });
+      viewportGlitchAvatar.addEventListener('click', () => {
+        avatarAnimator.giggle();
+      });
+    }
+
+    // ... Rest of common logic (Dropdowns, initialization, etc.)
+    window.toggleDropdown = (id) => document.getElementById(id).classList.toggle('is-open');
+    window.selectProvider = (val, label) => {
+      document.getElementById('providerSelect').value = val;
+      document.getElementById('providerLabel').innerText = label;
+      document.getElementById('providerDropdown').classList.remove('is-open');
+    };
+    window.selectVoice = (val) => {
+      selectedVoiceName = val;  // Update global variable
+      document.getElementById('voiceLabel').innerText = 'Voice: ' + val;
+      document.getElementById('voiceDropdown').classList.remove('is-open');
+      console.log('[VoiceManager] Voice changed to:', val);
+      // Save to localStorage for persistence
+      localStorage.setItem('selected-voice', val);
+    };
+    // Load saved voice on page load
+    const savedVoice = localStorage.getItem('selected-voice');
+    if (savedVoice) {
+      selectedVoiceName = savedVoice;
+      document.getElementById('voiceLabel').innerText = 'Voice: ' + savedVoice;
+    }
+    window.onclick = (e) => {
+      if (!e.target.closest('.dropdown-container')) {
+        document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('is-open'));
+      }
+    };
+    window.toggleTheme = () => {
+      const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', next);
+      localStorage.setItem('chat-theme', next);
+    };
+
+    async function initialize() {
+      document.body.setAttribute('data-theme', localStorage.getItem('chat-theme') || 'dark');
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      const memStatus = document.getElementById('memoryStatus');
+      memStatus.innerText = data.redis_enabled ? '✓ REDIS ACTIVE' : '⚠ LOCAL VOLATILE';
+      if (data.redis_enabled) memStatus.classList.add('active');
+      loadSessions();
+    }
+
+    async function loadSessions() {
+      const res = await fetch('/api/sessions');
+      const sessions = await res.json();
+      sessionsList.innerHTML = sessions.map(s => `
+        <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}" onclick="switchSession('${s.session_id}')">
+          <div class="session-indicator"></div>
+          <div><div style="font-weight: 600; font-size: 13px;">${s.session_id}</div><div style="font-size:10px; opacity:0.5">${s.messages} cycles sync</div></div>
+        </div>
+      `).join('') || '<p style="font-size:12px;color:var(--text-muted);padding:10px;">No nodes</p>';
+    }
+
+    window.switchSession = (id) => { currentSessionId = id; messagesDiv.innerHTML = ''; document.getElementById('currentSessionTitle').textContent = id; loadSessions(); };
+    window.clearCurrentSession = async () => { if(confirm('Terminate session memory?')) { await fetch(`/api/sessions/${currentSessionId}/clear`, {method:'POST'}); switchSession(currentSessionId); } };
+
+    // Semantic Search Functions
+    async function semanticSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return;
+      
+      const resultsDiv = document.getElementById('searchResults');
+      resultsDiv.innerHTML = '<div style="color: var(--accent-primary);">Searching...</div>';
+      
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, top_k: 5, threshold: 0.3 })
+        });
+        const data = await res.json();
+        
+        if (data.results && data.results.length > 0) {
+          resultsDiv.innerHTML = data.results.map(r => `
+            <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px; margin-bottom: 6px; border-left: 2px solid ${r.similarity > 0.7 ? 'var(--accent-primary)' : 'var(--glass-border)'};">
+              <div style="font-size: 10px; color: var(--accent-primary); margin-bottom: 4px;">${(r.similarity * 100).toFixed(0)}% match • ${r.session_id}</div>
+              <div style="color: var(--text-secondary); font-size: 11px; margin-bottom: 4px;"><strong>Q:</strong> ${r.user_message.substring(0, 80)}${r.user_message.length > 80 ? '...' : ''}</div>
+              <div style="color: var(--text-muted); font-size: 10px;"><strong>A:</strong> ${r.assistant_reply.substring(0, 100)}${r.assistant_reply.length > 100 ? '...' : ''}</div>
+            </div>
+          `).join('');
+        } else {
+          resultsDiv.innerHTML = '<div style="color: var(--text-muted); padding: 8px;">No relevant memories found</div>';
+        }
+      } catch (e) {
+        resultsDiv.innerHTML = '<div style="color: var(--error-color); padding: 8px;">Search failed</div>';
+      }
+    }
+    
+    async function loadEmbeddingStats() {
+      try {
+        const res = await fetch('/api/embeddings/stats');
+        const data = await res.json();
+        document.getElementById('embedCount').textContent = `${data.total_embeddings} embedded`;
+      } catch (e) {
+        document.getElementById('embedCount').textContent = 'N/A';
+      }
+    }
+    
+    // Enter key to search
+    document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') semanticSearch();
+    });
+    
+    // Load stats on page load
+    setTimeout(loadEmbeddingStats, 1000);
+
+    function addMessage(text, role) {
+      const group = document.createElement('div');
+      group.className = `bubble-group ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role}`;
+      bubble.textContent = text;
+      const meta = document.createElement('div');
+      meta.className = 'timestamp';
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      meta.innerHTML = `<span>${time} • ${role === 'user' ? 'Uplink' : 'Bridge'}</span>`;
+      const sbtn = document.createElement('button');
+      sbtn.className = 'speak-btn'; sbtn.textContent = '🔊';
+      sbtn.onclick = () => voice.speak(text);
+      meta.appendChild(sbtn);
+      group.appendChild(bubble);
+      group.appendChild(meta);
+      messagesDiv.appendChild(group);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return bubble;
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || sendBtn.disabled) return;
+      messageInput.value = ''; addMessage(text, 'user');
+      const loading = document.createElement('div');
+      loading.className = 'loading';
+      loading.innerHTML = '<span></span><span></span><span></span>';
+      messagesDiv.appendChild(loading);
+      sendBtn.disabled = true;
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message: text, session_id: currentSessionId, provider: document.getElementById('providerSelect').value, stream: true, use_memory: document.getElementById('memoryToggle').checked })
+        });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        loading.remove();
+        const assistantContent = addMessage('', 'assistant');
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          const chunks = decoder.decode(value).split('\n');
+          for (const chunk of chunks) {
+            if (chunk.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(chunk.slice(6));
+                if (data.content) { fullText += data.content; assistantContent.textContent = fullText; messagesDiv.scrollTop = messagesDiv.scrollHeight; }
+              } catch(e){}
+            }
+          }
+        }
+        if (document.getElementById('ttsToggle').checked) voice.speak(fullText);
+        loadSessions();
+      } catch(e) { console.error(e); }
+      finally { sendBtn.disabled = false; }
+    }
+
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeydown = (e) => { if(e.key === 'Enter' && e.ctrlKey) sendMessage(); };
+    messageInput.addEventListener('input', () => { messageInput.style.height = 'auto'; messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px'; });
+
+    initialize();
+  </script>
+</body>
+</html>
