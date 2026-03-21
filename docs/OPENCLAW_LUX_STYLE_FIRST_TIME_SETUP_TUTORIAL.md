@@ -1,4 +1,4 @@
-# OpenClaw Lux-Style First-Time Setup Tutorial
+# OpenClaw Lumifren-Style First-Time Setup Tutorial
 
 Document version: 1.0  
 Last updated: 2026-02-27 (UTC)  
@@ -106,7 +106,7 @@ Use absolute path in scripts/services if needed.
 
 ## 6) Phase D: Install Homebrew + Core Tooling
 
-This tutorial uses Lux-style compatibility:
+This tutorial uses lumifren-style compatibility:
 - Payload at `/home/brewuser/.linuxbrew`
 - Compatibility symlink `/home/linuxbrew/.linuxbrew -> /home/brewuser/.linuxbrew`
 
@@ -119,7 +119,7 @@ NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Ho
 '
 ```
 
-### 6.2 Move to Lux-style payload path and create compat symlink
+### 6.2 Move to lumifren-style payload path and create compat symlink
 
 ```bash
 sudo bash -lc '
@@ -143,7 +143,7 @@ chown -h root:root /home/linuxbrew/.linuxbrew
 ```bash
 sudo -iu brewuser bash -lc 'cat >> ~/.bashrc <<"BASHRC_BLOCK"
 
-# Lux-style Homebrew bootstrap
+# lumifren-style Homebrew bootstrap
 if [ -x "$HOME/.linuxbrew/bin/brew" ]; then
     eval "$("$HOME/.linuxbrew/bin/brew" shellenv bash)"
 elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
@@ -157,7 +157,7 @@ export NVM_DIR="$HOME/.nvm"
 BASHRC_BLOCK'
 ```
 
-### 6.4 Install common packages used in Lux-style workflows
+### 6.4 Install common packages used in lumifren-style workflows
 
 ```bash
 sudo -iu brewuser bash -lc '
@@ -180,7 +180,7 @@ openclaw configure
 '
 ```
 
-### 7.2 Apply baseline Lux-style operational config
+### 7.2 Apply baseline lumifren-style operational config
 
 ```bash
 sudo -iu brewuser bash -lc '
@@ -308,7 +308,7 @@ systemctl --user status openclaw-gateway.service --no-pager | sed -n "1,60p"
 '
 ```
 
-## 11) Phase I: Add Lux-Style Healthcheck Automation
+## 11) Phase I: Add Lumifren-Style Healthcheck Automation
 
 ### 11.1 Install healthcheck script
 
@@ -550,4 +550,4 @@ If you adopt Lux backup scripts, keep them in:
 
 ---
 
-You now have a Lux-style OpenClaw platform blueprint that can be replicated in any new environment (VPC or on-prem).
+You now have a lumifren-style OpenClaw platform blueprint that can be replicated in any new environment (VPC or on-prem).

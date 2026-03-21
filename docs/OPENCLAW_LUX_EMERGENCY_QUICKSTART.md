@@ -1,4 +1,4 @@
-# OpenClaw Lux Emergency Quickstart (15-30 Minute Restore)
+# OpenClaw Lumifren Emergency Quickstart (15-30 Minute Restore)
 
 Last updated: 2026-02-27 (UTC)  
 Primary target: Ubuntu 24.04 + systemd + Docker  

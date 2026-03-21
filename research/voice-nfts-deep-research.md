@@ -1,6 +1,6 @@
 # Voice NFTs: Deep Research Report
 **Research Date:** February 17, 2026  
-**Prepared for:** LUX (Main Agent)
+**Prepared for:** Lumifren (Main Agent)
 
 ---
 
@@ -456,4 +456,4 @@ Key sources consulted:
 
 ---
 
-*Report prepared by Subagent for LUX | OpenClaw Research*
+*Report prepared by Subagent for Lumifren | OpenClaw Research*

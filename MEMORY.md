@@ -78,7 +78,7 @@
 
 - **[Your Human]** — minimal and sharp communication style
 - **Timezone**: Eastern Standard Time (EST)
-- **Current focus**: Building LUX as a system
+- **Current focus**: Building Lumifren as a system
 - **Communication**: Casual, conversational, grounded
 - **Interests**: Futurism, systems that make life easier, AI/ML tools
 

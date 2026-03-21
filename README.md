@@ -1,6 +1,6 @@
 # Lumifren 🔆
 
-**Lumifren** is an advanced, multi-provider AI chat application with real-time voice integration, long-term semantic memory, and specialized Foundry agents. Originally built as Kimi Chat, Lumifren has evolved into a high-performance "Aether OS" inspired interface for seamless human-AI collaboration.
+**Lumifren** is an advanced, multi-provider AI chat application with real-time voice integration, long-term semantic memory, and specialized Foundry agents. Originally built as Lumifren, Lumifren has evolved into a high-performance "Aether OS" inspired interface for seamless human-AI collaboration.
 
 ![Lumifren UI](https://raw.githubusercontent.com/your-username/lumifren/main/docs/assets/ui-preview.png) *(Placeholder for UI Preview)*
 

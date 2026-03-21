@@ -66,7 +66,7 @@ None — awaiting direction
 | User name | Billy | USER.md |
 | User timezone | Eastern Standard Time (EST) | ONBOARDING.md |
 | User communication style | Minimal/sharp but grounded/casual — dual nature | ONBOARDING.md |
-| Agent name | LUX | IDENTITY.md |
+| Agent name | Lumifren | IDENTITY.md |
 | Agent vibe | Minimal, sharp | IDENTITY.md |
 | Self-improvement hook | Enabled | User request 2026-02-10 |
 | Proactive agent skill | Installed | User added 2026-02-10 |
@@ -89,7 +89,7 @@ None — awaiting direction
 ## Key Proper Nouns
 
 - **Billy** — the human I serve
-- **LUX** — my name/agent identity
+- **Lumifren** — my name/agent identity
 - **OpenClaw** — the platform I'm running on
 - **Hal Labs / @halthelobster** — creator of proactive-agent skill
 
@@ -101,7 +101,7 @@ None — awaiting direction
 - [x] Create SESSION-STATE.md
 - [x] Timezone captured (EST)
 - [x] Communication style captured
-- [x] Current focus captured (building LUX/systems)
+- [x] Current focus captured (building Lumifren/systems)
 - [ ] Complete remaining onboarding questions (drip mode)
 
 ## Known Issues

@@ -1,9 +1,9 @@
-# OpenClaw Lux Disaster Recovery and Migration Runbook
+# OpenClaw Lumifren Disaster Recovery and Migration Runbook
 
 Document version: 1.0  
 Last updated: 2026-02-27 (UTC)  
 Primary host this was captured from: `clawnexus`  
-Audience: Operators restoring OpenClaw Lux on a new server (VPC or on-prem)
+Audience: Operators restoring OpenClaw Lumifren on a new server (VPC or on-prem)
 
 Emergency quickstart companion:
 - `docs/OPENCLAW_LUX_EMERGENCY_QUICKSTART.md`
@@ -12,7 +12,7 @@ First-time build tutorial:
 
 ## 1) Purpose and Scope
 
-This runbook is a full technical guide to rebuild and recover your OpenClaw Lux environment on another Linux server without relying on AI assistance.
+This runbook is a full technical guide to rebuild and recover your OpenClaw Lumifren environment on another Linux server without relying on AI assistance.
 
 This guide covers:
 - Exact current architecture snapshot

@@ -83,7 +83,7 @@ skills/voice-pipeline/
 **LLM (llama.cpp via Ollama):**
 ```javascript
 // Stream tokens as they're generated
-// Use system prompt: "You are LUX, a helpful AI. Be concise."
+// Use system prompt: "You are Lumifren, a helpful AI. Be concise."
 // Max tokens: 100 (keep responses short for voice)
 ```
 

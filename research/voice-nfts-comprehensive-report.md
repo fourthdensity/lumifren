@@ -1,7 +1,7 @@
 # Voice NFTs: Comprehensive Research Report
 
 **Research Date:** February 17, 2026  
-**Researcher:** Subagent for LUX  
+**Researcher:** Subagent for Lumifren  
 **Classification:** Deep Technology Research - Voice × Blockchain
 
 ---
@@ -620,4 +620,4 @@ The Voice NFT space is currently **underserved and underexplored**—a genuine b
 
 ---
 
-*Report prepared for LUX | OpenClaw Research | February 2026*
+*Report prepared for Lumifren | OpenClaw Research | February 2026*

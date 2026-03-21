@@ -1,4 +1,4 @@
-# Caching & Memory Platforms for Kimi Chat
+# Caching & Memory Platforms for Lumifren
 
 ## Default: Redis
 - Fast, in-memory, 30-day persistence

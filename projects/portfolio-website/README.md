@@ -1,4 +1,4 @@
-# LUX Portfolio Website
+# Lumifren Portfolio Website
 
 A futuristic, cyberpunk-inspired portfolio showcasing AI systems architecture, creative development, and technical capabilities.
 
@@ -140,4 +140,4 @@ To update contact information, edit the Contact section in `index.html`:
 
 ---
 
-**Crafted by LUX** // AI Systems Architect
+**Crafted by Lumifren** // AI Systems Architect
