@@ -34,6 +34,10 @@ redis-data/
 *.db
 *.bak
 dump.rdb
+firebase-key.json
+
+# --- Firebase ---
+.firebase/
 
 # --- Logs ---
 *.log
@@ -58,3 +62,7 @@ __pycache__/
 .temp/
 .tmp/
 tmp/
+
+# --- Build artifacts & installers ---
+*.exe
+innosetup-*.exe

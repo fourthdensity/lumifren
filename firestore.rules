@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /personalData/{appId}/users/{uid}/{collectionName}/{docId} {
+      allow get: if uid == request.auth.uid;
+      allow list: if uid == request.auth.uid && request.query.limit <= 100;
+      allow write: if uid == request.auth.uid;
+    }
+
+    match /publicData/{appId}/{collectionName}/{docId} {
+      allow get: if true;
+      allow list: request.query.limit <= 100;
+      allow write: if true;
+    }
+  }
+}

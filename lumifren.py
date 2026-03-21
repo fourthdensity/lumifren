@@ -12,6 +12,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import logging
 from collections import deque
+from typing import Any, Dict, List, Optional, Union
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth, firestore
 
 # --- Logging Setup ---
 class DequeHandler(logging.Handler):
@@ -52,6 +55,23 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 ENABLE_AUTH = os.getenv("ENABLE_AUTH", "false").lower() == "true"
 APP_USER = os.getenv("APP_USER", "admin")
 APP_PASS = os.getenv("APP_PASS", "lumifren2026")
+
+try:
+    firebase_admin.get_app()
+except ValueError:
+    if os.path.exists("firebase-key.json"):
+        cred = credentials.Certificate("firebase-key.json")
+        firebase_admin.initialize_app(cred, options={'projectId': 'lumifren-app-2026'})
+    else:
+        firebase_admin.initialize_app(options={'projectId': 'lumifren-app-2026'})
+
+try:
+    db = firestore.client()
+    FIRESTORE_AVAILABLE = True
+except Exception as e:
+    log_info(f"[WARN] Firestore init failed: {e}")
+    db = None
+    FIRESTORE_AVAILABLE = False
 
 # --- Performance Optimizations ---
 
@@ -112,7 +132,7 @@ class AgentClient:
 
 agent_client = AgentClient(AGENT_API_URL)
 
-PROVIDERS = {
+PROVIDERS: Dict[str, Dict[str, str]] = {
     "nvidia": {
         "url": KIMI_PROXY_URL,
         "key": KIMI_API_KEY,
@@ -157,7 +177,7 @@ except Exception as e:
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 # Performance Metrics
-METRICS = {
+METRICS: Dict[str, Any] = {
     'latencies': [],
     'total_requests': 0,
     'cache_hits': 0,
@@ -178,14 +198,29 @@ def authenticate():
 @app.before_request
 def global_auth():
     if ENABLE_AUTH:
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
+        # Exempt index, static, and config
+        if request.endpoint in ('index', 'get_config', 'static'):
+            return None
+            
+        if request.path.startswith('/api/'):
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Unauthorized'}), 401
+            try:
+                id_token = auth_header.split('Bearer ')[1]
+                request.user = firebase_auth.verify_id_token(id_token)
+            except Exception as e:
+                log_info(f"[AUTH ERROR] {e}")
+                return jsonify({'error': 'Unauthorized'}), 401
+        elif request.path.startswith('/admin'):
+            auth = request.authorization
+            if not auth or not check_auth(auth.username, auth.password):
+                return authenticate()
 
 # In-memory fallback
-MEMORY_STORE = {}
-CONVERSATION_HISTORY = {}
-CACHE_STORE = {}
+MEMORY_STORE: Dict[str, List[str]] = {}
+CONVERSATION_HISTORY: Dict[str, List[Dict[str, Any]]] = {}
+CACHE_STORE: Dict[str, Any] = {}
 
 @app.route('/')
 def index():
@@ -245,6 +280,9 @@ def chat():
     provider_name = data.get('provider', 'nvidia')
     foundry_agent = data.get('foundry_agent', 'memory')
     
+    uid = getattr(request, 'user', {}).get('uid', 'default') if ENABLE_AUTH else 'default'
+    session_key = f"{uid}_{session_id}"
+    
     if not message:
         return jsonify({'error': 'Message cannot be empty'}), 400
 
@@ -258,8 +296,15 @@ def chat():
             METRICS['latencies'].append((time.time() - start_time) * 1000)
             return jsonify(json.loads(cached_res))
 
-    if session_id not in CONVERSATION_HISTORY:
-        CONVERSATION_HISTORY[session_id] = []
+    if session_key not in CONVERSATION_HISTORY:
+        CONVERSATION_HISTORY[session_key] = []
+        if FIRESTORE_AVAILABLE and db:
+            try:
+                doc = db.collection('users').document(uid).collection('conversations').document(session_id).get()
+                if doc.exists:
+                    CONVERSATION_HISTORY[session_key] = doc.to_dict().get('messages', [])
+            except Exception as e:
+                log_info(f"[ERROR] Firestore history load failed: {e}")
 
     def generate():
         full_reply = ""
@@ -289,7 +334,7 @@ def chat():
                 {"role": "system", "content": system_prompt},
             ]
             
-            for msg in CONVERSATION_HISTORY[session_id][-10:]:
+            for msg in CONVERSATION_HISTORY[session_key][-10:]:
                 messages.append(msg)
             
             messages.append({"role": "user", "content": message})
@@ -421,15 +466,27 @@ def chat():
                         
                         if f_name == "save_memory":
                             fact = f_args.get("fact")
-                            store_memory(session_id, "User fact", fact)
+                            store_memory(session_id, "User fact", fact, uid)
                             result = "Memory saved successfully."
                             yield f"data: {json.dumps({'status': f'Saving memory: {fact[:30]}...'})}\n\n"
                         elif f_name == "search_memory":
                             query = f_args.get("query")
                             yield f"data: {json.dumps({'status': f'Searching memory for \"{query}\"...'})}\n\n"
                             result = "No specific memories found."
-                            if REDIS_AVAILABLE:
-                                keys = redis_client.keys(f"memory:{session_id}:*")
+                            
+                            if FIRESTORE_AVAILABLE and db:
+                                try:
+                                    docs = db.collection('users').document(uid).collection('memories').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(20).stream()
+                                    found = []
+                                    for doc in docs:
+                                        d = doc.to_dict()
+                                        if query.lower() in d.get('user_message', '').lower() or query.lower() in d.get('assistant_reply_snippet', '').lower():
+                                            found.append(f"Q: {d.get('user_message')}\nA: {d.get('assistant_reply_snippet')}")
+                                    if found: result = "\n".join(found[-5:])
+                                except Exception as e:
+                                    log_info(f"[ERROR] Firestore read failed: {e}")
+                            elif REDIS_AVAILABLE:
+                                keys = redis_client.keys(f"memory:{uid}:{session_id}:*")
                                 found = [redis_client.get(k) for k in keys if query.lower() in redis_client.get(k).lower()]
                                 if found: result = "\n".join(found[-5:])
                         
@@ -443,9 +500,18 @@ def chat():
                 else:
                     break
 
-            CONVERSATION_HISTORY[session_id].append({"role": "user", "content": message})
-            CONVERSATION_HISTORY[session_id].append({"role": "assistant", "content": full_reply})
-            if use_memory: store_memory(session_id, message, full_reply)
+            CONVERSATION_HISTORY[session_key].append({"role": "user", "content": message})
+            CONVERSATION_HISTORY[session_key].append({"role": "assistant", "content": full_reply})
+            if use_memory: store_memory(session_id, message, full_reply, uid)
+            
+            if FIRESTORE_AVAILABLE and db:
+                try:
+                    db.collection('users').document(uid).collection('conversations').document(session_id).set({
+                        'messages': CONVERSATION_HISTORY[session_key],
+                        'last_updated': datetime.now().isoformat()
+                    })
+                except Exception as e:
+                    log_info(f"[ERROR] Firestore history sync failed: {e}")
 
             cache_data = {
                 'reply': full_reply, 
@@ -544,38 +610,77 @@ def get_memory_context(session_id, current_message):
             context = MEMORY_STORE[session_id][-5:]
     return "\n".join(context) if context else ""
 
-def store_memory(session_id, user_message, assistant_reply):
+def store_memory(session_id, user_message, assistant_reply, uid='default'):
     memory_entry = f"Q: {user_message}\nA: {assistant_reply[:200]}..."
     timestamp = datetime.now().isoformat()
+
+    if FIRESTORE_AVAILABLE and db:
+        try:
+            doc_ref = db.collection('users').document(uid).collection('memories').document(timestamp)
+            doc_ref.set({
+                'session_id': session_id,
+                'user_message': user_message,
+                'assistant_reply_snippet': assistant_reply[:200],
+                'timestamp': timestamp
+            })
+            log_info(f"[DEBUG] Stored memory in Firestore for uid={uid}")
+        except Exception as e:
+            log_info(f"[ERROR] Firestore write failed: {e}")
+
     if REDIS_AVAILABLE and redis_client:
-        key = f"memory:{session_id}:{timestamp}"
+        key = f"memory:{uid}:{session_id}:{timestamp}"
         redis_client.setex(key, 30*24*60*60, memory_entry)
         log_info(f"[DEBUG] Stored memory in Redis: {key}")
     else:
-        if session_id not in MEMORY_STORE:
-            MEMORY_STORE[session_id] = []
-        MEMORY_STORE[session_id].append(memory_entry)
-        if len(MEMORY_STORE[session_id]) > 50:
-            MEMORY_STORE[session_id] = MEMORY_STORE[session_id][-50:]
+        mem_key = f"{uid}_{session_id}"
+        if mem_key not in MEMORY_STORE:
+            MEMORY_STORE[mem_key] = []
+        MEMORY_STORE[mem_key].append(memory_entry)
+        if len(MEMORY_STORE[mem_key]) > 50:
+            MEMORY_STORE[mem_key] = MEMORY_STORE[mem_key][-50:]
         log_info(f"[DEBUG] Stored memory in-memory")
 
 @app.route('/api/sessions', methods=['GET'])
 def get_sessions():
     sessions = []
-    for s_id, history in CONVERSATION_HISTORY.items():
-        if REDIS_AVAILABLE and redis_client:
-            mem_count = len(redis_client.keys(f"memory:{s_id}:*"))
-        else:
-            mem_count = len(MEMORY_STORE.get(s_id, []))
-        sessions.append({'session_id': s_id, 'messages': len(history), 'memories': mem_count})
+    uid = getattr(request, 'user', {}).get('uid', 'default') if ENABLE_AUTH else 'default'
+    
+    if FIRESTORE_AVAILABLE and db:
+        try:
+            docs = db.collection('users').document(uid).collection('conversations').stream()
+            for doc in docs:
+                d = doc.to_dict()
+                s_id = doc.id
+                session_key = f"{uid}_{s_id}"
+                if session_key not in CONVERSATION_HISTORY:
+                    CONVERSATION_HISTORY[session_key] = d.get('messages', [])
+        except Exception as e:
+            log_info(f"[ERROR] Firestore get_sessions failed: {e}")
+
+    for k, history in CONVERSATION_HISTORY.items():
+        if k.startswith(f"{uid}_"):
+            s_id = k.split("_", 1)[1]
+            if REDIS_AVAILABLE and redis_client:
+                mem_count = len(redis_client.keys(f"memory:{uid}:{s_id}:*"))
+            else:
+                mem_count = len(MEMORY_STORE.get(k, []))
+            sessions.append({'session_id': s_id, 'messages': len(history), 'memories': mem_count})
     return jsonify(sessions)
 
 @app.route('/api/sessions/<session_id>/clear', methods=['POST'])
 def clear_session(session_id):
-    if session_id in CONVERSATION_HISTORY: del CONVERSATION_HISTORY[session_id]
+    uid = getattr(request, 'user', {}).get('uid', 'default') if ENABLE_AUTH else 'default'
+    session_key = f"{uid}_{session_id}"
+    if session_key in CONVERSATION_HISTORY: del CONVERSATION_HISTORY[session_key]
+    if FIRESTORE_AVAILABLE and db:
+        try:
+            db.collection('users').document(uid).collection('conversations').document(session_id).delete()
+        except Exception as e:
+            log_info(f"[ERROR] Firestore clear session failed: {e}")
+            
     if REDIS_AVAILABLE and redis_client:
-        for key in redis_client.keys(f"memory:{session_id}:*"): redis_client.delete(key)
-    elif session_id in MEMORY_STORE: del MEMORY_STORE[session_id]
+        for key in redis_client.keys(f"memory:{uid}:{session_id}:*"): redis_client.delete(key)
+    elif session_key in MEMORY_STORE: del MEMORY_STORE[session_key]
     return jsonify({'status': 'cleared'})
 
 @app.route('/api/settings', methods=['GET'])
@@ -605,4 +710,5 @@ if __name__ == '__main__':
     log_info(f"NVIDIA API: {KIMI_PROXY_URL}")
     log_info(f"Memory Backend: {'Redis' if REDIS_AVAILABLE else 'In-Memory'}")
     log_info("="*60 + "\n")
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=False)

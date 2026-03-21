@@ -15,3 +15,4 @@ google-generativeai
 openai
 azure-core
 azure-ai-evaluation
+firebase-admin
