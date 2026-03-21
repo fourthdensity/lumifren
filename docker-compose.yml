@@ -1,0 +1,76 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - REDIS_URL=redis://lumifren-redis:6379
+      - AGENT_API_URL=http://lumifren-agents:8000
+      - USE_AGENTS=true
+    depends_on:
+      - lumifren-agents
+    networks:
+      - lumifren-network
+    restart: unless-stopped
+
+  lumifren-agents:
+    build:
+      context: M:\FOUNDRY\lumifren-agents
+      dockerfile: Dockerfile
+    container_name: lumifren-agents
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    environment:
+      - FOUNDRY_API_KEY=${FOUNDRY_API_KEY}
+      - FOUNDRY_MODEL=${FOUNDRY_MODEL:-gpt-oss-120b}
+      - REDIS_URL=redis://lumifren-redis:6379
+    volumes:
+      - M:\FOUNDRY\lumifren-agents\agents\memory_curator.txt:/app/agents/memory_curator.txt
+      - M:\FOUNDRY\lumifren-agents\agents\tone_detector.txt:/app/agents/tone_detector.txt
+      - M:\FOUNDRY\lumifren-agents\agents\dev_assistant.txt:/app/agents/dev_assistant.txt
+    depends_on:
+      lumifren-redis:
+        condition: service_healthy
+    networks:
+      - lumifren-network
+    restart: unless-stopped
+
+  lumifren-redis:
+    image: redis:7-alpine
+    container_name: lumifren-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - lumifren-network
+    restart: unless-stopped
+
+  lumifren-redis-dashboard:
+    image: rediscommander/redis-commander:latest
+    container_name: lumifren-redis-dashboard
+    environment:
+      - REDIS_HOSTS=local:lumifren-redis:6379
+    ports:
+      - "5000:8081"
+    depends_on:
+      - lumifren-redis
+    networks:
+      - lumifren-network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  lumifren-network:
+    external: true

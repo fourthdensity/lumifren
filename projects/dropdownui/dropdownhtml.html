@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash UI | Prism Selection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <main class="stage">
+        
+        <!-- Left: Command Dropdown -->
+        <section>
+            <div class="section-header">
+                <h2>01 / Command Interface</h2>
+            </div>
+
+            <div class="dropdown-container" id="cmdDropdown">
+                <div class="dropdown-trigger" onclick="toggleDropdown()">
+                    <span class="trigger-label" id="selectedText">System Architecture</span>
+                    <svg class="trigger-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+                    </svg>
+                </div>
+
+                <div class="dropdown-menu">
+                    <div class="menu-item" onclick="selectItem(this, 'System Architecture')">
+                        <span>System Architecture</span>
+                        <span class="item-meta">Active</span>
+                    </div>
+                    <div class="menu-item" onclick="selectItem(this, 'Neural Mapping')">
+                        <span>Neural Mapping</span>
+                        <span class="item-meta">v2.4</span>
+                    </div>
+                    <div class="menu-item" onclick="selectItem(this, 'Quantum Logic')">
+                        <span>Quantum Logic</span>
+                        <span class="item-meta">Exp</span>
+                    </div>
+                    <div class="menu-item" onclick="selectItem(this, 'Visual Synthesis')">
+                        <span>Visual Synthesis</span>
+                        <span class="item-meta">Idle</span>
+                    </div>
+                    <div class="menu-item" onclick="selectItem(this, 'Buffer Overflow')">
+                        <span>Buffer Overflow</span>
+                        <span class="item-meta">Crit</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Configuration Grid -->
+        <section>
+            <div class="section-header">
+                <h2>02 / Node Configuration</h2>
+            </div>
+
+            <div class="selection-grid">
+                <div class="grid-option active" onclick="toggleOption(this)">
+                    <span class="indicator"></span>
+                    <span class="option-tag">MTX-01</span>
+                    <span class="option-title">Standard</span>
+                </div>
+                <div class="grid-option" onclick="toggleOption(this)">
+                    <span class="indicator"></span>
+                    <span class="option-tag">MTX-02</span>
+                    <span class="option-title">Parallel</span>
+                </div>
+                <div class="grid-option" onclick="toggleOption(this)">
+                    <span class="indicator"></span>
+                    <span class="option-tag">MTX-03</span>
+                    <span class="option-title">Recursive</span>
+                </div>
+                <div class="grid-option" onclick="toggleOption(this)">
+                    <span class="indicator"></span>
+                    <span class="option-tag">MTX-04</span>
+                    <span class="option-title">Hyper</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function toggleDropdown() {
+            const container = document.getElementById('cmdDropdown');
+            container.classList.toggle('is-open');
+        }
+
+        function selectItem(el, text) {
+            document.getElementById('selectedText').innerText = text;
+            document.getElementById('cmdDropdown').classList.remove('is-open');
+            
+            // Visual feedback
+            const trigger = document.querySelector('.dropdown-trigger');
+            trigger.style.borderColor = 'var(--accent)';
+            setTimeout(() => {
+                trigger.style.borderColor = 'var(--border)';
+            }, 600);
+        }
+
+        function toggleOption(el) {
+            // Remove active from others if needed (Radio logic)
+            // Or toggle for checkbox logic. Let's do radio logic.
+            const gridItems = document.querySelectorAll('.grid-option');
+            gridItems.forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown-container')) {
+                const openDropdowns = document.getElementsByClassName("dropdown-container");
+                for (let i = 0; i < openDropdowns.length; i++) {
+                    openDropdowns[i].classList.remove('is-open');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

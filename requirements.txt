@@ -1,0 +1,17 @@
+Flask
+requests
+redis
+werkzeug
+python-dotenv
+appwrite
+fastapi
+uvicorn
+httpx
+websockets
+azure-ai-projects
+azure-identity
+azure-ai-inference
+google-generativeai
+openai
+azure-core
+azure-ai-evaluation

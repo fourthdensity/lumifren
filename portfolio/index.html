@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elias Vance — Visual Storytelling</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #121214;
+            --accent: #d4a574;
+            --accent-glow: rgba(212, 165, 116, 0.3);
+            --text-primary: #f5f2ed;
+            --text-secondary: #9a9590;
+            --border: rgba(245, 242, 237, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease, background 0.15s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-glow);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.3s ease;
+        }
+
+        .cursor.hover {
+            transform: scale(2);
+            background: var(--accent);
+        }
+
+        /* Film Grain Overlay */
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9990;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            mix-blend-mode: difference;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: -10%;
+            left: -5%;
+            width: 110%;
+            height: 120%;
+            background: linear-gradient(135deg, rgba(212, 165, 116, 0.1) 0%, transparent 50%),
+                        url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920&q=80') center/cover;
+            filter: brightness(0.4) saturate(0.8);
+            z-index: -1;
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .hero-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 2rem;
+            display: block;
+        }
+
+        .hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(4rem, 12vw, 10rem);
+            font-weight: 300;
+            line-height: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 span {
+            display: block;
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .hero-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            max-width: 400px;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .hero-cta:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 3rem;
+            left: 4rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .scroll-line {
+            width: 60px;
+            height: 1px;
+            background: var(--text-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scroll-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            animation: scrollPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes scrollPulse {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+
+        /* Gallery Section */
+        .gallery {
+            padding: 8rem 4rem;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 4rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.4em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 300;
+        }
+
+        .section-count {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.1em;
+        }
+
+        /* Asymmetric Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: 300px;
+            gap: 1.5rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-item:nth-child(1) { grid-column: 1 / 7; grid-row: 1 / 3; }
+        .gallery-item:nth-child(2) { grid-column: 7 / 10; grid-row: 1 / 2; }
+        .gallery-item:nth-child(3) { grid-column: 10 / 13; grid-row: 1 / 3; }
+        .gallery-item:nth-child(4) { grid-column: 7 / 10; grid-row: 2 / 4; }
+        .gallery-item:nth-child(5) { grid-column: 1 / 4; grid-row: 3 / 5; }
+        .gallery-item:nth-child(6) { grid-column: 4 / 7; grid-row: 3 / 4; }
+        .gallery-item:nth-child(7) { grid-column: 10 / 13; grid-row: 3 / 4; }
+        .gallery-item:nth-child(8) { grid-column: 4 / 10; grid-row: 4 / 6; }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(30%) brightness(0.8);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-item:hover img {
+            filter: grayscale(0%) brightness(1);
+            transform: scale(1.05);
+        }
+
+        .gallery-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10, 10, 11, 0.8) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .gallery-item:hover::after {
+            opacity: 1;
+        }
+
+        .gallery-item-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem;
+            z-index: 2;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .gallery-item:hover .gallery-item-info {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .gallery-item-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .gallery-item-meta {
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        /* About Section */
+        .about {
+            padding: 8rem 4rem;
+            background: var(--bg-secondary);
+            position: relative;
+        }
+
+        .about::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.5;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 6rem;
+            align-items: center;
+        }
+
+        .about-image {
+            position: relative;
+        }
+
+        .about-image img {
+            width: 100%;
+            height: auto;
+            filter: grayscale(100%) contrast(1.1);
+        }
+
+        .about-image::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: -20px;
+            bottom: -20px;
+            border: 1px solid var(--accent);
+            z-index: -1;
+        }
+
+        .about-content h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 300;
+            margin-bottom: 2rem;
+            line-height: 1.2;
+        }
+
+        .about-content h2 span {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .about-text {
+            color: var(--text-secondary);
+            line-height: 2;
+            margin-bottom: 2rem;
+        }
+
+        .about-stats {
+            display: flex;
+            gap: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Contact Section */
+        .contact {
+            padding: 8rem 4rem;
+            text-align: center;
+        }
+
+        .contact h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+
+        .contact h2 span {
+            display: block;
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        .contact-email {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            display: block;
+        }
+
+        .contact-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem 3rem;
+            background: var(--accent);
+            color: var(--bg-primary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .contact-cta:hover {
+            background: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 4rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .gallery-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+            
+            .gallery-item:nth-child(1) { grid-column: 1 / 4; grid-row: 1 / 3; }
+            .gallery-item:nth-child(2) { grid-column: 4 / 7; grid-row: 1 / 2; }
+            .gallery-item:nth-child(3) { grid-column: 4 / 7; grid-row: 2 / 4; }
+            .gallery-item:nth-child(4) { grid-column: 1 / 4; grid-row: 3 / 5; }
+            .gallery-item:nth-child(5) { grid-column: 4 / 7; grid-row: 4 / 6; }
+            .gallery-item:nth-child(6) { grid-column: 1 / 3; grid-row: 5 / 6; }
+            .gallery-item:nth-child(7) { grid-column: 3 / 4; grid-row: 5 / 6; }
+            .gallery-item:nth-child(8) { grid-column: 1 / 7; grid-row: 6 / 8; }
+            
+            .about-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 1.5rem 2rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .hero, .gallery, .about, .contact {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                grid-auto-rows: 250px;
+            }
+            
+            .gallery-item {
+                grid-column: 1 !important;
+                grid-row: auto !important;
+            }
+            
+            .about-stats {
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            footer {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .cursor, .cursor-follower {
+                display: none;
+            }
+            
+            body {
+                cursor: auto;
+            }
+        }
+
+        /* Scroll Reveal Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    
+    <!-- Film Grain Overlay -->
+    <div class="grain"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">Elias <span>Vance</span></div>
+        <ul class="nav-links">
+            <li><a href="#work">Work</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <span class="hero-label">Visual Storyteller</span>
+            <h1>
+                Capturing
+                <span>Moments</span>
+                That Breathe
+            </h1>
+            <p class="hero-desc">
+                Editorial and documentary photography exploring the poetry of light, 
+                shadow, and human connection across landscapes both urban and wild.
+            </p>
+            <a href="#work" class="hero-cta hover-target">
+                <span>View Selected Works</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M7 17L17 7M17 7H7M17 7V17"/>
+                </svg>
+            </a>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="gallery" id="work">
+        <div class="section-header reveal">
+            <div>
+                <span class="section-label">Selected Works</span>
+                <h2 class="section-title">The Collection</h2>
+            </div>
+            <span class="section-count">2023 — 2026</span>
+        </div>
+
+        <div class="gallery-grid">
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Mountain landscape at golden hour">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Alpine Glow</h3>
+                    <span class="gallery-item-meta">Dolomites, Italy — 2024</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80" alt="Portrait study">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">The Gaze</h3>
+                    <span class="gallery-item-meta">Studio Portrait — 2025</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80" alt="Street photography">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Urban Flow</h3>
+                    <span class="gallery-item-meta">Tokyo, Japan — 2024</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80" alt="Solitude in nature">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Solitude</h3>
+                    <span class="gallery-item-meta">Scottish Highlands — 2023</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=80" alt="Fashion editorial">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Velvet Hours</h3>
+                    <span class="gallery-item-meta">Editorial — 2025</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80" alt="Architecture detail">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Concrete Dreams</h3>
+                    <span class="gallery-item-meta">Berlin, Germany — 2024</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80" alt="Environmental portrait">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Natural Light</h3>
+                    <span class="gallery-item-meta">Portrait Series — 2025</span>
+                </div>
+            </div>
+            <div class="gallery-item reveal">
+                <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80" alt="Misty forest">
+                <div class="gallery-item-info">
+                    <h3 class="gallery-item-title">Silent Woods</h3>
+                    <span class="gallery-item-meta">Pacific Northwest — 2024</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="about">
+        <div class="about-grid">
+            <div class="about-image reveal">
+                <img src="https://images.unsplash.com/photo-1554048612-b6a482bc67e5?w=600&q=80" alt="The photographer at work">
+            </div>
+            <div class="about-content reveal">
+                <span class="section-label">About</span>
+                <h2>
+                    Photography is not about 
+                    <span>the thing photographed.</span>
+                    It is about how that thing 
+                    <span>looks photographed.</span>
+                </h2>
+                <p class="about-text">
+                    I'm Elias Vance, a visual storyteller based between Lisbon and London. 
+                    My work sits at the intersection of documentary and fine art — seeking 
+                    authenticity in fleeting moments and finding beauty in the overlooked. 
+                    Whether shooting editorial campaigns or wandering through unknown streets, 
+                    I'm drawn to light, texture, and the quiet poetry of everyday life.
+                </p>
+                <div class="about-stats">
+                    <div class="stat">
+                        <span class="stat-number">12+</span>
+                        <span class="stat-label">Years Experience</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">48</span>
+                        <span class="stat-label">Countries Visited</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">200+</span>
+                        <span class="stat-label">Projects Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+        <span class="section-label reveal">Let's Create Together</span>
+        <h2 class="reveal">
+            Ready to tell
+            <span>your story?</span>
+        </h2>
+        <span class="contact-email reveal">hello@eliasvance.com</span>
+        <a href="mailto:hello@eliasvance.com" class="contact-cta hover-target reveal">
+            Start a Project
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <span>&copy; 2026 Elias Vance. All rights reserved.</span>
+        <div class="footer-links">
+            <a href="#">Instagram</a>
+            <a href="#">Behance</a>
+            <a href="#">LinkedIn</a>
+        </div>
+    </footer>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.cursor');
+        const follower = document.querySelector('.cursor-follower');
+        const hoverTargets = document.querySelectorAll('.hover-target, .gallery-item, .nav-links a');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                follower.style.left = e.clientX + 'px';
+                follower.style.top = e.clientY + 'px';
+            }, 100);
+        });
+
+        hoverTargets.forEach(target => {
+            target.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+            target.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+        });
+
+        // Scroll Reveal
+        const reveals = document.querySelectorAll('.reveal');
+        
+        const revealOnScroll = () => {
+            reveals.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('active');
+                }
+            });
+        };
+
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+    </script>
+</body>
+</html>

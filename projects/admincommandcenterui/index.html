@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER_OS // ADMIN TERMINAL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="grid-overlay"></div>
+
+    <aside>
+        <div class="brand">
+            <h1>AETHER_OS</h1>
+        </div>
+        <nav>
+            <a href="#" class="nav-item active"><span>01</span> Dashboard</a>
+            <a href="#" class="nav-item"><span>02</span> Neural Nodes</a>
+            <a href="#" class="nav-item"><span>03</span> Data Streams</a>
+            <a href="#" class="nav-item"><span>04</span> Crypto Vault</a>
+            <a href="#" class="nav-item"><span>05</span> Security Protocol</a>
+            <a href="#" class="nav-item"><span>06</span> System Logs</a>
+        </nav>
+        <div class="brand" style="margin-bottom: 0; margin-top: auto; opacity: 0.4;">
+            <p style="font-family: var(--font-mono); font-size: 0.6rem;">BUILD_V4.2.0_STABLE</p>
+        </div>
+    </aside>
+
+    <main>
+        <div class="header-bar animate-reveal">
+            <div class="page-title">
+                <h2>CENTRAL COMMAND</h2>
+                <p>Uptime: 1,420.44.12 // Location: Orbit-Satellite-09</p>
+            </div>
+            <div style="text-align: right">
+                <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent)">USER_ADMIN_ROOT</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim)">SECURE CONNECTION :: AES-256</div>
+            </div>
+        </div>
+
+        <section class="stats-strip">
+            <div class="stat-card animate-reveal" style="animation-delay: 0.1s">
+                <span class="stat-label">Neural Capacity</span>
+                <span class="stat-value">84.2%</span>
+                <div class="stat-chart" id="chart1"></div>
+            </div>
+            <div class="stat-card animate-reveal" style="animation-delay: 0.2s">
+                <span class="stat-label">Active Uplinks</span>
+                <span class="stat-value">1,204</span>
+                <div class="stat-chart" id="chart2"></div>
+            </div>
+            <div class="stat-card animate-reveal" style="animation-delay: 0.3s">
+                <span class="stat-label">Data Throughput</span>
+                <span class="stat-value">9.4 PB/s</span>
+                <div class="stat-chart" id="chart3"></div>
+            </div>
+            <div class="stat-card animate-reveal" style="animation-delay: 0.4s">
+                <span class="stat-label">Threat Level</span>
+                <span class="stat-value" style="color: var(--magenta)">LOW</span>
+                <div class="stat-chart" id="chart4"></div>
+            </div>
+        </section>
+
+        <div class="dashboard-grid">
+            <div class="panel animate-reveal" style="animation-delay: 0.5s">
+                <div class="hud-corner top-left"></div>
+                <div class="hud-corner top-right"></div>
+                <div class="panel-header">
+                    <h3>Spatial Mapping / Activity</h3>
+                    <div style="width: 10px; height: 10px; background: var(--accent); border-radius: 50%;" class="pulse"></div>
+                </div>
+                <div class="panel-content">
+                    <svg viewBox="0 0 800 300" style="width: 100%; height: 260px;">
+                        <defs>
+                            <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:var(--accent);stop-opacity:0.2" />
+                                <stop offset="100%" style="stop-color:var(--accent);stop-opacity:0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,150 Q100,50 200,150 T400,150 T600,150 T800,150" fill="none" stroke="var(--accent)" stroke-width="2">
+                            <animate attributeName="d" dur="5s" repeatCount="indefinite" values="M0,150 Q100,50 200,150 T400,150 T600,150 T800,150; M0,150 Q100,250 200,150 T400,150 T600,150 T800,150; M0,150 Q100,50 200,150 T400,150 T600,150 T800,150" />
+                        </path>
+                        <path d="M0,150 Q100,50 200,150 T400,150 T600,150 T800,150 L800,300 L0,300 Z" fill="url(#grad)" opacity="0.5">
+                            <animate attributeName="d" dur="5s" repeatCount="indefinite" values="M0,150 Q100,50 200,150 T400,150 T600,150 T800,150 L800,300 L0,300 Z; M0,150 Q100,250 200,150 T400,150 T600,150 T800,150 L800,300 L0,300 Z; M0,150 Q100,50 200,150 T400,150 T600,150 T800,150 L800,300 L0,300 Z" />
+                        </path>
+                        <circle cx="200" cy="150" r="4" fill="#fff" filter="drop-shadow(0 0 5px var(--accent))">
+                             <animate attributeName="cy" dur="5s" repeatCount="indefinite" values="150;150;150" />
+                        </circle>
+                    </svg>
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                        <div class="log-entry" style="border: none;"><span class="log-time">[ NODE_X ]</span> <span class="log-msg">Synchronizing multi-threaded data stream...</span></div>
+                        <div class="log-entry" style="border: none;"><span class="log-status">LATENCY: 4ms</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel animate-reveal" style="animation-delay: 0.6s">
+                <div class="panel-header">
+                    <h3>Live System Feed</h3>
+                </div>
+                <div class="panel-content" id="log-container">
+                    <!-- Logs will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px" class="panel animate-reveal" style="animation-delay: 0.7s">
+            <div class="panel-header">
+                <h3>Active Deployment Nodes</h3>
+            </div>
+            <div class="panel-content">
+                <div class="node-list">
+                    <div class="node-item">
+                        <div class="node-info">
+                            <span class="name">CORE_PROCESSOR_ALFA</span>
+                            <span class="meta">ADDR: 192.0.0.1 // LOAD: 22%</span>
+                        </div>
+                        <div class="status-pill">Operational</div>
+                    </div>
+                    <div class="node-item">
+                        <div class="node-info">
+                            <span class="name">CORE_PROCESSOR_BETA</span>
+                            <span class="meta">ADDR: 192.0.0.2 // LOAD: 98%</span>
+                        </div>
+                        <div class="status-pill" style="color: var(--magenta); border-color: var(--magenta);">Critical</div>
+                    </div>
+                    <div class="node-item">
+                        <div class="node-info">
+                            <span class="name">STORAGE_ARRAY_01</span>
+                            <span class="meta">ADDR: 192.0.0.5 // CAPACITY: 1.2 EB</span>
+                        </div>
+                        <div class="status-pill">Operational</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Generate random bars for stat cards
+        document.querySelectorAll('.stat-chart').forEach(chart => {
+            for(let i=0; i<20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = Math.random() * 100 + '%';
+                chart.appendChild(bar);
+            }
+        });
+
+        // Dynamic Logs
+        const logContainer = document.getElementById('log-container');
+        const messages = [
+            "Initializing handshake protocol...",
+            "Encrypting data packet 0x44F...",
+            "Breach attempt detected in Sector 7 - Blocked.",
+            "Refreshing neural cache...",
+            "Optimizing gateway routing...",
+            "Uplink established with Mars-Proxy.",
+            "Shadow backup completed successfully."
+        ];
+
+        function addLog() {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
+            
+            entry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-msg">${messages[Math.floor(Math.random() * messages.length)]}</span>
+                <span class="log-status">OK</span>
+            `;
+            
+            logContainer.prepend(entry);
+            if(logContainer.children.length > 8) {
+                logContainer.lastChild.remove();
+            }
+        }
+
+        setInterval(addLog, 3000);
+        for(let i=0; i<6; i++) addLog();
+
+        // Mouse Move Interaction
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            document.body.style.backgroundPosition = `${x * 10}px ${y * 10}px, 0 0, 0 0`;
+        });
+    </script>
+</body>
+</html>

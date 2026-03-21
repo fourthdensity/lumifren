@@ -1,0 +1,60 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# --- Environment & Secrets ---
+.env
+.env.*
+.venv
+*.key
+*.pem
+*.token
+*.secret
+credentials.json
+client_secrets.json
+
+# --- Database & Storage ---
+redis-data/
+*.sqlite3
+*.db
+*.bak
+dump.rdb
+
+# --- Logs ---
+*.log
+curl_out.txt
+payload.json
+
+# --- OS & IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# --- Project Specific ---
+memory/working-buffer.md
+memory/heartbeat-state.json
+.kimi/
+__pycache__/
+
+# --- Temporary ---
+.temp/
+.tmp/
+tmp/

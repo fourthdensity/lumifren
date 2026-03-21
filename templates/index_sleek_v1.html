@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUX.UX - Voice & Memory Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030303;
+      --surface: rgba(18, 18, 22, 0.8);
+      --accent-primary: #5e5ce6;
+      --accent-secondary: #ff375f;
+      --accent-tertiary: #00ffee;
+      --text-main: #ffffff;
+      --text-muted: #8e8e93;
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --bubble-user: linear-gradient(135deg, #5e5ce6 0%, #3634a3 100%);
+      --bubble-ai: rgba(28, 28, 30, 0.6);
+      --sidebar-width: 300px;
+      --ease: cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: rgba(255, 255, 255, 0.9);
+      --accent-primary: #4f46e5;
+      --accent-secondary: #e11d48;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --glass-border: rgba(0, 0, 0, 0.1);
+      --bubble-user: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+      --bubble-ai: rgba(241, 245, 249, 0.8);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(94, 92, 230, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 55, 95, 0.08) 0%, transparent 40%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      color: var(--text-main);
+      transition: background 0.3s;
+      overflow: hidden;
+    }
+    
+    .app-shell {
+      width: 98vw;
+      height: 94vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      background: var(--surface);
+      backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.6s var(--ease), opacity 0.6s var(--ease);
+    }
+
+    .app-shell.searching { transform: scale(0.95); opacity: 0.5; pointer-events: none; }
+
+    /* SIDEBAR */
+    .sidebar {
+      border-right: 1px solid var(--glass-border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: rgba(0,0,0,0.2);
+      overflow-y: auto;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-primary);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(94, 92, 230, 0.4);
+    }
+
+    .sidebar-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* PRISM DROPDOWN */
+    .dropdown-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-trigger {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      padding: 12px 16px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.3s var(--ease);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dropdown-trigger:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .dropdown-trigger::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      transition: 0.5s var(--ease);
+    }
+
+    .dropdown-trigger:hover::before { left: 100%; }
+
+    .trigger-label { font-size: 13px; font-weight: 500; }
+    .trigger-icon { opacity: 0.4; transition: transform 0.4s var(--ease); }
+    .is-open .trigger-icon { transform: rotate(180deg); }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      background: rgba(15, 15, 15, 0.98);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+      pointer-events: none;
+      transition: all 0.4s var(--ease);
+      z-index: 100;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .is-open .dropdown-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+
+    .menu-item {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 13px;
+    }
+
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: rgba(255,255,255,0.05); padding-left: 24px; color: var(--accent-primary); }
+    .menu-item .item-meta { font-family: 'JetBrains Mono'; font-size: 9px; opacity: 0.4; text-transform: uppercase; }
+
+    .settings-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .settings-group label:hover { color: var(--text-main); }
+
+    .memory-status {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+    }
+    .memory-status.active { color: #32d74b; background: rgba(50, 215, 75, 0.05); border-color: rgba(50, 215, 75, 0.2); }
+
+    .sessions-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .session-item {
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .session-item:hover { background: rgba(255, 255, 255, 0.05); transform: translateX(4px); }
+    .session-item.active { background: rgba(94, 92, 230, 0.1); border-color: rgba(94, 92, 230, 0.3); color: var(--text-main); }
+
+    .session-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+    .session-item.active .session-indicator { background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary); }
+
+    /* MAIN CHAT */
+    .chat-main {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: radial-gradient(circle at top right, rgba(255,255,255,0.02), transparent);
+    }
+
+    .chat-header {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .status-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-secondary);
+      background: rgba(255, 55, 95, 0.1);
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 55, 95, 0.2);
+    }
+
+    .messages {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+    /* BUBBLES */
+    .bubble-group {
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+    .bubble-group.user { align-self: flex-end; align-items: flex-end; }
+    .bubble-group.assistant { align-self: flex-start; align-items: flex-start; }
+
+    .bubble { padding: 14px 20px; font-size: 15px; line-height: 1.6; position: relative; }
+    .bubble.assistant { background: var(--bubble-ai); border: 1px solid var(--glass-border); border-radius: 4px 20px 20px 20px; color: #e0e0e0; }
+    .bubble.user { background: var(--bubble-user); border-radius: 20px 4px 20px 20px; color: white; box-shadow: 0 10px 30px rgba(94, 92, 230, 0.2); }
+    .bubble.system { background: rgba(255, 171, 0, 0.1); border: 1px solid rgba(255, 171, 0, 0.2); border-radius: 8px; color: #ffab00; font-size: 12px; padding: 8px 12px; align-self: center; }
+
+    .timestamp { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted); margin: 0 4px; display: flex; align-items: center; gap: 8px; }
+
+    .speak-btn { cursor: pointer; opacity: 0.4; transition: opacity 0.2s; background: none; border: none; font-size: 12px; color: var(--text-main); }
+    .speak-btn:hover { opacity: 1; color: var(--accent-primary); }
+
+    /* INPUT AREA */
+    .input-wrapper { padding: 30px 40px; background: linear-gradient(to top, var(--bg) 40%, transparent); }
+    .input-bar { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 20px; padding: 6px 8px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
+    .input-bar:focus-within { border-color: var(--accent-primary); background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 4px rgba(94, 92, 230, 0.15); }
+
+    #messageInput { background: transparent; border: none; flex: 1; color: white; font-size: 15px; padding: 10px; outline: none; font-family: inherit; resize: none; max-height: 120px; }
+
+    .btn { height: 38px; padding: 0 16px; border-radius: 14px; border: none; font-family: inherit; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+    .btn-send { background: var(--accent-primary); color: white; box-shadow: 0 4px 15px rgba(94, 92, 230, 0.3); }
+    .btn-send:hover { background: #6e6cf0; transform: translateY(-1px); }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .loading { display: flex; gap: 4px; padding: 10px; }
+    .loading span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-primary); animation: bounce 1.4s infinite; }
+    @keyframes bounce { 0%, 80%, 100% { opacity: 0.3; transform: scale(1); } 40% { opacity: 1; transform: scale(1.2); } }
+
+    /* VOICE OVERLAY (VOICECHATLIVEUX) */
+    #voiceOverlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease);
+    }
+    #voiceOverlay.active { display: flex; opacity: 1; }
+
+    .stage-area {
+      position: relative;
+      width: 500px;
+      height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .globule-wrapper { filter: url('#goo'); width: 100%; height: 100%; position: relative; }
+    .blob {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 50%; filter: blur(20px); opacity: 0.8;
+      transition: all 0.4s var(--ease);
+    }
+    .blob-main { width: 160px; height: 160px; z-index: 2; box-shadow: 0 0 60px rgba(94, 92, 230, 0.4); }
+    .blob-sub-1 { width: 100px; height: 100px; animation: orbit 8s infinite linear; }
+    .blob-sub-2 { width: 80px; height: 80px; animation: orbit 12s infinite linear reverse; }
+    .blob-sub-3 { width: 60px; height: 60px; animation: orbit 6s infinite ease-in-out; }
+
+    @keyframes orbit {
+      from { transform: translate(-50%, -50%) rotate(0deg) translateX(100px); }
+      to { transform: translate(-50%, -50%) rotate(360deg) translateX(100px); }
+    }
+
+    .voice-controls {
+      position: absolute; bottom: 60px; display: flex; gap: 24px; align-items: center;
+      padding: 16px 40px; background: rgba(255,255,255,0.03); backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border); border-radius: 100px;
+    }
+
+    .btn-voice {
+      width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--glass-border);
+      background: transparent; color: white; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: all 0.3s;
+    }
+    .btn-voice:hover { background: white; color: black; transform: translateY(-2px); }
+    .btn-voice.btn-end { background: #ff375f; border: none; width: 64px; height: 64px; }
+    .btn-voice.btn-end:hover { background: #ff5e7d; color: white; }
+
+    .voice-status {
+      position: absolute; top: 60px; text-align: center; font-family: 'JetBrains Mono';
+    }
+    .voice-status h1 { font-size: 2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    .voice-status p { font-size: 0.7rem; color: var(--accent-tertiary); letter-spacing: 2px; }
+
+    .vocal-data {
+      position: absolute; right: 60px; top: 100px; bottom: 100px; width: 240px;
+      display: flex; flex-direction: column; gap: 12px; font-family: 'JetBrains Mono'; font-size: 10px;
+    }
+    .data-entry { opacity: 0.4; border-left: 1px solid var(--accent-tertiary); padding-left: 10px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="mainShell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon"></div>
+        LUX.UX
+      </div>
+
+      <div class="sidebar-header">
+        <span>Settings & Core</span>
+        <span onclick="toggleTheme()" style="cursor:pointer; opacity:0.6;">🌓</span>
+      </div>
+      
+      <div class="settings-group">
+        <!-- CUSTOM PROVIDER DROPDOWN -->
+        <div class="dropdown-container" id="providerDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('providerDropdown')">
+            <span class="trigger-label" id="providerLabel">NVIDIA (Kimi K2.5)</span>
+            <svg class="trigger-icon" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
+          </div>
+          <div class="dropdown-menu">
+            <div class="menu-item" onclick="selectProvider('nvidia', 'NVIDIA (Kimi K2.5)')"><span>NVIDIA (Kimi K2.5)</span><span class="item-meta">Primary</span></div>
+            <div class="menu-item" onclick="selectProvider('github', 'GitHub Copilot')"><span>GitHub Copilot</span><span class="item-meta">GPT-4o</span></div>
+            <div class="menu-item" onclick="selectProvider('gemini', 'Google Gemini')"><span>Google Gemini</span><span class="item-meta">2.5 Flash</span></div>
+          </div>
+        </div>
+
+        <!-- CUSTOM VOICE DROPDOWN -->
+        <div class="dropdown-container" id="voiceDropdown">
+          <div class="dropdown-trigger" onclick="toggleDropdown('voiceDropdown')">
+            <span class="trigger-label" id="voiceLabel">Voice: Kore</span>
+            <svg class="trigger-icon" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>
+          </div>
+          <div class="dropdown-menu">
+            <div class="menu-item" onclick="selectVoice('Kore')"><span>Kore</span><span class="item-meta">Std</span></div>
+            <div class="menu-item" onclick="selectVoice('Zephyr')"><span>Zephyr</span><span class="item-meta">Fast</span></div>
+            <div class="menu-item" onclick="selectVoice('Puck')"><span>Puck</span><span class="item-meta">Cheerful</span></div>
+            <div class="menu-item" onclick="selectVoice('Charon')"><span>Charon</span><span class="item-meta">Deep</span></div>
+            <div class="menu-item" onclick="selectVoice('Fenrir')"><span>Fenrir</span><span class="item-meta">Strong</span></div>
+          </div>
+        </div>
+
+        <select id="providerSelect" style="display:none;"><option value="nvidia">nvidia</option><option value="github">github</option><option value="gemini">gemini</option></select>
+        <select id="voiceSelect" style="display:none;"><option value="Kore">Kore</option><option value="Zephyr">Zephyr</option><option value="Puck">Puck</option><option value="Charon">Charon</option><option value="Fenrir">Fenrir</option></select>
+
+        <label><input type="checkbox" id="ttsToggle"> Auto-Speak</label>
+        <label style="color:var(--accent-secondary); font-weight:bold; cursor:pointer;" onclick="toggleVoiceMode()">🎙️ Call LUX</label>
+        <label><input type="checkbox" id="memoryToggle" checked> Enable Memory</label>
+
+        <div class="memory-status" id="memoryStatus">Initializing...</div>
+      </div>
+
+      <div class="sidebar-header">Active Sessions</div>
+      <div class="sessions-list" id="sessionsList"></div>
+
+      <div style="margin-top:auto;">
+        <button onclick="clearCurrentSession()" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-muted); cursor:pointer; font-size:12px;">Clear History</button>
+        <a href="/admin/dashboard" target="_blank" style="display:block; text-align:center; margin-top:10px; font-size:10px; color:var(--accent-primary); text-decoration:none; text-transform:uppercase; letter-spacing:1px; font-family:'JetBrains Mono';">Admin Terminal ↗</a>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT -->
+    <main class="chat-main">
+      <header class="chat-header">
+        <div>
+          <h2 style="font-size: 16px; font-weight: 700;" id="currentSessionTitle">LUX Command Bridge</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Neural bridge established</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="status-badge">Live Encrypted</div>
+        </div>
+      </header>
+      
+      <section class="messages" id="messages"></section>
+      
+      <div class="status" id="status" style="font-family:'JetBrains Mono'; font-size:10px; opacity:0.5; text-align:center; padding:10px;"></div>
+      
+      <div class="input-wrapper">
+        <div class="input-bar">
+          <textarea id="messageInput" placeholder="Type a message... (Ctrl+Enter)" rows="1"></textarea>
+          <div style="display:flex; gap:8px; padding-right:8px;">
+            <button class="btn btn-send" id="sendBtn">
+              Send
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- VOICE INTERFACE OVERLAY -->
+  <div id="voiceOverlay">
+    <div class="voice-status">
+      <p id="callStatusText">CONNECTING UPLINK</p>
+      <h1>LUX.LIVE</h1>
+    </div>
+
+    <div class="vocal-data" id="vocalData">
+      <div class="data-entry">INITIALIZING BIOMETRICS...</div>
+      <div class="data-entry">CONTEXT SYNC ACTIVE...</div>
+    </div>
+
+    <div class="stage-area">
+      <div class="globule-wrapper">
+        <div class="blob blob-main" id="blobCore"></div>
+        <div class="blob blob-sub-1"></div>
+        <div class="blob blob-sub-2"></div>
+        <div class="blob blob-sub-3"></div>
+      </div>
+    </div>
+
+    <div class="voice-controls">
+      <button class="btn-voice" title="Mute">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v4M12 19v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M1 12h4M19 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+      </button>
+      <button class="btn-voice btn-end" onclick="toggleVoiceMode()" title="End Call">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect></svg>
+      </button>
+      <button class="btn-voice" title="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Gooey Filter -->
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="display:none"><defs><filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" /><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -12" result="goo" /><feComposite in="SourceGraphic" in2="goo" operator="atop" /></filter></defs></svg>
+
+  <script type="module">
+    import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai';
+
+    class VoiceManager {
+      constructor() {
+        this.audioContext = null;
+        this.nextStartTime = 0;
+        this.liveSession = null;
+        this.stream = null;
+        this.processor = null;
+        this.activeSources = [];
+        this.volume = 0;
+        this.onVolumeChange = null;
+      }
+
+      async init() {
+        if (!this.audioContext) {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        }
+        if (this.audioContext.state === 'suspended') await this.audioContext.resume();
+      }
+
+      async getConfig() {
+        const res = await fetch('/api/config');
+        return await res.json();
+      }
+
+      playPcmChunk(base64Data) {
+        if (!this.audioContext) return;
+        const binaryData = atob(base64Data);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) bytes[i] = binaryData.charCodeAt(i);
+        const pcmData = new Int16Array(bytes.buffer);
+        const float32Data = new Float32Array(pcmData.length);
+        
+        let sum = 0;
+        for (let i = 0; i < pcmData.length; i++) {
+          const val = pcmData[i] / 32768.0;
+          float32Data[i] = val;
+          sum += Math.abs(val);
+        }
+        
+        const avgVol = (sum / pcmData.length) * 100;
+        if (this.onVolumeChange) this.onVolumeChange(avgVol);
+
+        const audioBuffer = this.audioContext.createBuffer(1, float32Data.length, 24000);
+        audioBuffer.getChannelData(0).set(float32Data);
+
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.audioContext.destination);
+        const startTime = Math.max(this.nextStartTime, this.audioContext.currentTime);
+        source.start(startTime);
+        this.nextStartTime = startTime + audioBuffer.duration;
+        this.activeSources.push(source);
+        source.onended = () => { this.activeSources = this.activeSources.filter(s => s !== source); };
+      }
+
+      async speak(text) {
+        if (!text.trim()) return;
+        await this.init();
+        this.nextStartTime = this.audioContext.currentTime;
+        try {
+          const config = await this.getConfig();
+          const ai = new GoogleGenAI({ apiKey: config.gemini_api_key });
+          const responseStream = await ai.models.generateContentStream({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text: `Speak: ${text}` }] }],
+            config: {
+              responseModalities: [Modality.AUDIO],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: document.getElementById('voiceSelect').value } } },
+            },
+          });
+          for await (const chunk of responseStream) {
+            const data = chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            if (data) this.playPcmChunk(data);
+          }
+        } catch (err) { console.error('TTS Error:', err); }
+      }
+
+      async startLive(onMessage, onStatus) {
+        await this.init();
+        const config = await this.getConfig();
+        const ai = new GoogleGenAI({ apiKey: config.gemini_api_key });
+        onStatus('STABILIZING NEURAL LINK');
+        this.liveSession = await ai.live.connect({
+          model: "gemini-2.5-flash-native-audio-preview-09-2025",
+          callbacks: {
+            onopen: () => { onStatus('UPLINK ESTABLISHED'); this.startMic(); },
+            onmessage: (msg) => {
+              if (msg.serverContent?.modelTurn?.parts) {
+                for (const part of msg.serverContent.modelTurn.parts) {
+                  if (part.inlineData) this.playPcmChunk(part.inlineData.data);
+                  if (part.text) onMessage(part.text);
+                }
+              }
+              if (msg.serverContent?.interrupted) this.stop();
+            },
+            onclose: () => onStatus('UPLINK TERMINATED'),
+            onerror: (e) => onStatus('LINK ERROR: ' + e)
+          },
+          config: {
+            responseModalities: [Modality.AUDIO],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: document.getElementById('voiceSelect').value } } },
+          }
+        });
+      }
+
+      async startMic() {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = this.audioContext.createMediaStreamSource(this.stream);
+        this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+        source.connect(this.processor);
+        this.processor.connect(this.audioContext.destination);
+        this.processor.onaudioprocess = (e) => {
+          const input = e.inputBuffer.getChannelData(0);
+          const pcm = new Int16Array(input.length);
+          let sum = 0;
+          for (let i = 0; i < input.length; i++) {
+            const val = Math.min(1, input[i]);
+            pcm[i] = val * 0x7FFF;
+            sum += Math.abs(val);
+          }
+          const userVol = (sum / input.length) * 100;
+          if (userVol > 5 && this.onVolumeChange) this.onVolumeChange(userVol);
+
+          if (this.liveSession) this.liveSession.sendRealtimeInput({ media: { data: btoa(String.fromCharCode(...new Uint8Array(pcm.buffer))), mimeType: 'audio/pcm;rate=24000' } });
+        };
+      }
+
+      stop() { this.activeSources.forEach(s => { try{s.stop()}catch(e){} }); this.activeSources = []; }
+      
+      stopLive() {
+        if (this.liveSession) this.liveSession.close();
+        if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+        if (this.processor) this.processor.disconnect();
+        this.stop();
+      }
+    }
+
+    const voice = new VoiceManager();
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusDiv = document.getElementById('status');
+    const sessionsList = document.getElementById('sessionsList');
+    const mainShell = document.getElementById('mainShell');
+    const voiceOverlay = document.getElementById('voiceOverlay');
+    const blobCore = document.getElementById('blobCore');
+    const vocalData = document.getElementById('vocalData');
+    
+    let currentSessionId = 'default';
+    let isVoiceMode = false;
+
+    // GLOBULE REACTIVITY
+    let currentScale = 1;
+    voice.onVolumeChange = (vol) => {
+      if (!isVoiceMode) return;
+      const targetScale = 1 + (vol / 50);
+      currentScale += (targetScale - currentScale) * 0.3;
+      blobCore.style.transform = `translate(-50%, -50%) scale(${currentScale})`;
+      blobCore.style.filter = `blur(${20 + vol/2}px)`;
+      
+      if (vol > 20 && Math.random() > 0.95) {
+        const entry = document.createElement('div');
+        entry.className = 'data-entry';
+        const msgs = ["ANALYZING WAVEFORM...", "DECRYPTING INTENT...", "BUFFERING CONTEXT...", "SYNAPSING..."];
+        entry.innerText = msgs[Math.floor(Math.random()*msgs.length)];
+        vocalData.prepend(entry);
+        if (vocalData.children.length > 10) vocalData.lastChild.remove();
+      }
+    };
+
+    window.toggleVoiceMode = () => {
+      isVoiceMode = !isVoiceMode;
+      if (isVoiceMode) {
+        mainShell.classList.add('searching');
+        voiceOverlay.style.display = 'flex';
+        setTimeout(() => voiceOverlay.classList.add('active'), 10);
+        voice.startLive(
+          (text) => addMessage(text, 'assistant'),
+          (s) => document.getElementById('callStatusText').innerText = s
+        );
+      } else {
+        voiceOverlay.classList.remove('active');
+        mainShell.classList.remove('searching');
+        setTimeout(() => voiceOverlay.style.display = 'none', 500);
+        voice.stopLive();
+      }
+    };
+
+    // GLOBAL CUSTOM UI LOGIC
+    window.toggleDropdown = (id) => {
+      const el = document.getElementById(id);
+      el.classList.toggle('is-open');
+    };
+
+    window.selectProvider = (val, label) => {
+      document.getElementById('providerSelect').value = val;
+      document.getElementById('providerLabel').innerText = label;
+      document.getElementById('providerDropdown').classList.remove('is-open');
+    };
+
+    window.selectVoice = (val) => {
+      document.getElementById('voiceSelect').value = val;
+      document.getElementById('voiceLabel').innerText = 'Voice: ' + val;
+      document.getElementById('voiceDropdown').classList.remove('is-open');
+    };
+
+    window.onclick = (e) => {
+      if (!e.target.closest('.dropdown-container')) {
+        document.querySelectorAll('.dropdown-container').forEach(d => d.classList.remove('is-open'));
+      }
+    };
+
+    window.toggleTheme = () => {
+      const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', next);
+      localStorage.setItem('chat-theme', next);
+    };
+
+    async function initialize() {
+      document.body.setAttribute('data-theme', localStorage.getItem('chat-theme') || 'dark');
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      const memStatus = document.getElementById('memoryStatus');
+      memStatus.textContent = data.redis_enabled ? '✓ REDIS ACTIVE' : '⚠ LOCAL VOLATILE';
+      if (data.redis_enabled) memStatus.classList.add('active');
+      loadSessions();
+    }
+
+    async function loadSessions() {
+      const res = await fetch('/api/sessions');
+      const sessions = await res.json();
+      sessionsList.innerHTML = sessions.map(s => `
+        <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}" onclick="switchSession('${s.session_id}')">
+          <div class="session-indicator"></div>
+          <div>
+            <div style="font-weight: 600; font-size: 13px;">${s.session_id}</div>
+            <div style="font-size:10px; opacity:0.5">${s.messages} cycles sync</div>
+          </div>
+        </div>
+      `).join('') || '<p style="font-size:12px;color:var(--text-muted);padding:10px;">No nodes</p>';
+    }
+
+    window.switchSession = (id) => { 
+      currentSessionId = id; 
+      messagesDiv.innerHTML = ''; 
+      document.getElementById('currentSessionTitle').textContent = id;
+      loadSessions(); 
+    };
+
+    window.clearCurrentSession = async () => { 
+      if(confirm('Terminate session memory?')) { 
+        await fetch(`/api/sessions/${currentSessionId}/clear`, {method:'POST'}); 
+        switchSession(currentSessionId); 
+      } 
+    };
+
+    function addMessage(text, role) {
+      const group = document.createElement('div');
+      group.className = `bubble-group ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role}`;
+      bubble.textContent = text;
+      const meta = document.createElement('div');
+      meta.className = 'timestamp';
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      meta.innerHTML = `<span>${time} • ${role === 'user' ? 'Uplink' : 'Bridge'}</span>`;
+      const sbtn = document.createElement('button');
+      sbtn.className = 'speak-btn';
+      sbtn.textContent = '🔊';
+      sbtn.onclick = () => voice.speak(text);
+      meta.appendChild(sbtn);
+      group.appendChild(bubble);
+      group.appendChild(meta);
+      messagesDiv.appendChild(group);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return bubble;
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || sendBtn.disabled) return;
+      messageInput.value = '';
+      addMessage(text, 'user');
+      const loading = document.createElement('div');
+      loading.className = 'loading';
+      loading.innerHTML = '<span></span><span></span><span></span>';
+      messagesDiv.appendChild(loading);
+      sendBtn.disabled = true;
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            message: text, session_id: currentSessionId, provider: document.getElementById('providerSelect').value, stream: true, use_memory: document.getElementById('memoryToggle').checked
+          })
+        });
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        loading.remove();
+        const assistantContent = addMessage('', 'assistant');
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          const chunks = decoder.decode(value).split('\n');
+          for (const chunk of chunks) {
+            if (chunk.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(chunk.slice(6));
+                if (data.content) {
+                  fullText += data.content;
+                  assistantContent.textContent = fullText;
+                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+              } catch(e){}
+            }
+          }
+        }
+        if (document.getElementById('ttsToggle').checked) voice.speak(fullText);
+        loadSessions();
+      } catch(e) { statusDiv.textContent = 'LINK ERROR DETECTED'; }
+      finally { sendBtn.disabled = false; }
+    }
+
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeydown = (e) => { if(e.key === 'Enter' && e.ctrlKey) sendMessage(); };
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    });
+
+    initialize();
+  </script>
+</body>
+</html>

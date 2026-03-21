@@ -1,0 +1,243 @@
+
+        :root {
+            --bg: #030303;
+            --accent: #00ffaa;
+            --glitch-red: #ff0055;
+            --glitch-blue: #0088ff;
+            --surface: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: var(--sans);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Scanline Texture Overlay */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .main-frame {
+            width: 95vw;
+            height: 85vh;
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* --- SIDEBARS --- */
+        .panel {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- GLITCH AGENT VISUAL --- */
+        .agent-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .glitch-avatar {
+            width: 180px;
+            height: 180px;
+            position: relative;
+        }
+
+        .glitch-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="40" fill="none" stroke="white" stroke-width="0.5"/><path d="M30 45 L40 45 M60 45 L70 45" stroke="white" stroke-width="2"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .glitch-layer:nth-child(1) {
+            filter: drop-shadow(2px 0 var(--glitch-red));
+            animation: glitch-anim 4s infinite linear alternate-reverse;
+        }
+
+        .glitch-layer:nth-child(2) {
+            filter: drop-shadow(-2px 0 var(--glitch-blue));
+            animation: glitch-anim 2s infinite linear alternate;
+            opacity: 0.5;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip-path: inset(10% 0 30% 0); transform: translate(-2px, 2px); }
+            20% { clip-path: inset(50% 0 10% 0); transform: translate(2px, -2px); }
+            40% { clip-path: inset(80% 0 5% 0); transform: translate(-5px, 0px); }
+            60% { clip-path: inset(10% 0 70% 0); transform: translate(5px, 1px); }
+            80% { clip-path: inset(40% 0 40% 0); transform: translate(-1px, -1px); }
+            100% { clip-path: inset(0% 0 0% 0); transform: translate(0, 0); }
+        }
+
+        /* --- CENTRAL VISUALIZER --- */
+        .viewport {
+            border: 1px solid var(--border);
+            background: radial-gradient(circle at center, rgba(0, 255, 170, 0.05) 0%, transparent 70%);
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            position: relative;
+        }
+
+        .v-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 40px;
+        }
+
+        .v-title h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            mix-blend-mode: screen;
+        }
+
+        .visualizer-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .bar {
+            width: 6px;
+            background: white;
+            transition: height 0.1s ease;
+            filter: drop-shadow(0 0 10px rgba(0, 255, 170, 0.5));
+        }
+
+        /* --- DATA MODULES --- */
+        .data-row {
+            margin-bottom: 12px;
+        }
+
+        .data-label {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 4px;
+        }
+
+        .data-value {
+            font-family: var(--mono);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+
+        .sys-log {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: #666;
+            height: 150px;
+            overflow: hidden;
+            mask-image: linear-gradient(to bottom, white, transparent);
+        }
+
+        /* SVG DISTORTION FILTER */
+        .distort {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+
+        .noise-btn {
+            margin-top: auto;
+            background: none;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 12px;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .noise-btn:hover {
+            background: var(--accent);
+            color: black;
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        .spectrogram {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+    

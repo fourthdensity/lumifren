@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Real-Time TTS",
+  "description": "A web application that uses Gemini to stream text-to-speech in real time.",
+  "requestFramePermissions": ["microphone"]
+}

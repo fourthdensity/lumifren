@@ -1,0 +1,11 @@
+import { useTTS } from '../hooks/useTTS';
+
+function MyComponent() {
+  const { speak, isStreaming, error } = useTTS();
+
+  return (
+    <button onClick={() => speak("Hello world!", "Zephyr")}>
+      {isStreaming ? "Speaking..." : "Speak"}
+    </button>
+  );
+}

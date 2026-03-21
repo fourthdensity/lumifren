@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Voice Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=JetBrains+Mono:wght@300;500&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+
+    <div id="cursor"></div>
+    <div class="noise"></div>
+
+    <aside>
+        <div class="top-nav">
+            <div class="brand">Synapse V2.0</div>
+            <div class="session-info">
+                <div class="status-tag">
+                    <span class="status-dot"></span>
+                    ACTIVE UPLINK
+                </div>
+                <h1>Neural<br>Assistant</h1>
+            </div>
+        </div>
+
+        <div class="metrics">
+            <div style="margin-bottom: 2rem;">
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem;">LATENCY</p>
+                <p style="font-family: var(--font-mono); font-size: 1.2rem;">24<span style="font-size: 0.8rem; opacity: 0.5;">ms</span></p>
+            </div>
+            <div>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem;">VOCAL SENSITIVITY</p>
+                <div style="width: 100%; height: 2px; background: var(--glass-border);">
+                    <div style="width: 75%; height: 100%; background: var(--accent-primary);"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main id="scene">
+        <div class="stage-area">
+            <div class="globule-wrapper" id="globule">
+                <div class="blob blob-main" id="blobCore"></div>
+                <div class="blob blob-sub-1"></div>
+                <div class="blob blob-sub-2"></div>
+                <div class="blob blob-sub-3"></div>
+            </div>
+        </div>
+
+        <div class="control-bar">
+            <button class="btn-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v4M12 19v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M1 12h4M19 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+            </button>
+            <button class="btn-circle" style="background: white; color: black; width: 64px; height: 64px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></button>
+            <button class="btn-circle btn-end">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2" ry="2"></rect></svg>
+            </button>
+        </div>
+    </main>
+
+    <div class="data-stream" id="logStream">
+        <div class="log-entry">UPLINK ESTABLISHED...</div>
+        <div class="log-entry">BIOMETRIC HANDSHAKE COMPLETE</div>
+        <div class="log-entry">AWAITING VOICE INPUT...</div>
+        
+        <div class="viz-bars" id="eqBars"></div>
+    </div>
+
+    <!-- SVG Gooey Filter -->
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="display:none">
+        <defs>
+            <filter id="goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur" />
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -12" result="goo" />
+                <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const blobCore = document.getElementById('blobCore');
+        const scene = document.getElementById('scene');
+        const logStream = document.getElementById('logStream');
+        const eqBars = document.getElementById('eqBars');
+
+        // Mouse Tracker
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Subtle parallax for the main blob
+            const moveX = (e.clientX - window.innerWidth / 2) / 30;
+            const moveY = (e.clientY - window.innerHeight / 2) / 30;
+            blobCore.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+        });
+
+        // Generate EQ Bars
+        for(let i=0; i<20; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            eqBars.appendChild(bar);
+        }
+
+        // Voice Simulation Logic
+        let volume = 0;
+        let targetVolume = 0;
+        
+        function simulateVoice() {
+            // Randomly simulate speech activity
+            if (Math.random() > 0.95) targetVolume = Math.random() * 100;
+            else targetVolume *= 0.92;
+
+            volume += (targetVolume - volume) * 0.2;
+
+            // Update Main Globule Scale
+            const scale = 1 + (volume / 200);
+            const hue = 220 + (volume);
+            blobCore.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            blobCore.style.background = `linear-gradient(45deg, hsl(${hue}, 80%, 60%), var(--accent-tertiary))`;
+            blobCore.style.filter = `blur(${20 + (volume/5)}px)`;
+
+            // Update EQ bars
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                const height = Math.random() * volume + 5;
+                bar.style.height = `${height}%`;
+                bar.style.background = volume > 40 ? 'var(--accent-primary)' : 'var(--text-dim)';
+            });
+
+            // Occasional Log Entry
+            if (Math.random() > 0.995 && volume > 20) {
+                const logs = ["ANALYZING SEMANTICS...", "DECODING TONE...", "CONTEXT BUFFERING...", "SYNTHESIZING RESPONSE..."];
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerText = logs[Math.floor(Math.random() * logs.length)];
+                logStream.insertBefore(entry, logStream.firstChild);
+                if(logStream.children.length > 15) logStream.lastChild.remove();
+            }
+
+            requestAnimationFrame(simulateVoice);
+        }
+
+        simulateVoice();
+
+        // Button Hover Effects
+        document.querySelectorAll('button').forEach(btn => {
+            btn.onmouseenter = () => {
+                cursor.style.transform = 'scale(2.5)';
+                cursor.style.background = 'rgba(255,255,255,0.1)';
+            };
+            btn.onmouseleave = () => {
+                cursor.style.transform = 'scale(1)';
+                cursor.style.background = 'transparent';
+            };
+        });
+    </script>
+</body>
+</html>

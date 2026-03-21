@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXON-01 // Audio Reactive Module</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=JetBrains+Mono:wght@300;700&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+
+    <svg class="distort">
+        <filter id="noise">
+            <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="3" stitchTiles="stitch" />
+            <feDisplacementMap in="SourceGraphic" scale="5" />
+        </filter>
+    </svg>
+
+    <main class="main-frame">
+        <!-- LEFT PANEL: TELEMETRY -->
+        <aside class="panel">
+            <div class="panel-header">
+                <span>Signal Telemetry</span>
+                <span>[04]</span>
+            </div>
+            
+            <div class="data-row">
+                <div class="data-label">INPUT LEVEL</div>
+                <div class="data-value">-12.4 dB</div>
+            </div>
+            
+            <div class="data-row">
+                <div class="data-label">SPECTRAL ENTROPY</div>
+                <div class="data-value">0.842</div>
+            </div>
+
+            <div class="data-row" style="margin-top: 40px;">
+                <div class="data-label">SYSTEM_LOG</div>
+                <div class="sys-log" id="sys-log">
+                    > Initializing AXON-01...<br>
+                    > Hooking audio_buffer...<br>
+                    > Calibrating FFT...<br>
+                    > Neural link established...<br>
+                    > Waiting for oscillation...<br>
+                </div>
+            </div>
+
+            <button class="noise-btn">Reset Feedback Loop</button>
+        </aside>
+
+        <!-- CENTER VIEWPORT: THE RE-ACTOR -->
+        <section class="viewport">
+            <div class="v-header">
+                <div class="v-title">
+                    <div class="data-label" style="margin-bottom: 8px;">ACTIVE_LISTENER_MODE</div>
+                    <h1>REACTIVE<br><span style="color: var(--accent)">NEURAL</span></h1>
+                </div>
+                <div class="v-meta" style="text-align: right; font-family: var(--mono); font-size: 12px;">
+                    LC_OS // BUILD 9.0.2<br>
+                    <span id="timestamp">12:44:02.11</span>
+                </div>
+            </div>
+
+            <div class="visualizer-stage" id="visualizer">
+                <!-- Bars injected via JS -->
+            </div>
+
+            <svg class="spectrogram" viewBox="0 0 1000 100" preserveAspectRatio="none">
+                <path d="M0 50 Q 250 10 500 50 T 1000 50" fill="none" stroke="var(--accent)" stroke-width="1" id="wavepath" />
+            </svg>
+        </section>
+
+        <!-- RIGHT PANEL: THE AGENT -->
+        <aside class="panel">
+            <div class="panel-header">
+                <span>Agent Identity</span>
+                <span>Online</span>
+            </div>
+
+            <div class="agent-container">
+                <div class="glitch-avatar">
+                    <div class="glitch-layer"></div>
+                    <div class="glitch-layer"></div>
+                    <div class="glitch-layer" style="opacity: 0.2; filter: blur(5px)"></div>
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <div class="status-dot"></div>
+                    <span style="font-family: var(--mono); font-size: 13px; font-weight: bold;">"LISTENING..."</span>
+                </div>
+            </div>
+
+            <div class="data-row" style="border-top: 1px solid var(--border); padding-top: 20px;">
+                <div class="data-label">VOICE_RECOGNITION</div>
+                <div class="data-value" style="font-size: 11px; color: var(--accent);">STOCHASTIC_ENGINE_V4</div>
+            </div>
+            
+            <div class="data-row">
+                <div class="data-label">MOOD_BIAS</div>
+                <div class="data-value" style="font-size: 11px;">SYNTHETIC_CURIOSITY</div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // Generate Visualizer Bars
+        const visualizer = document.getElementById('visualizer');
+        const barCount = 64;
+        const bars = [];
+
+        for(let i=0; i < barCount; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = '10px';
+            bar.style.opacity = 0.2 + (i / barCount) * 0.8;
+            visualizer.appendChild(bar);
+            bars.push(bar);
+        }
+
+        // Animation Loop
+        function animate() {
+            // Update Visualizer
+            bars.forEach((bar, index) => {
+                const speed = 0.05 + (index * 0.01);
+                const noise = Math.sin(Date.now() * speed) * 40 + Math.random() * 20;
+                const baseHeight = 20 + (Math.sin(Date.now() * 0.002 + index * 0.1) * 60);
+                const finalHeight = Math.max(5, baseHeight + noise);
+                bar.style.height = `${finalHeight}px`;
+                
+                // Reactive coloring
+                if(finalHeight > 80) {
+                    bar.style.background = 'var(--accent)';
+                } else if (finalHeight > 50) {
+                    bar.style.background = 'white';
+                } else {
+                    bar.style.background = 'rgba(255,255,255,0.3)';
+                }
+            });
+
+            // Update Wavepath
+            const path = document.getElementById('wavepath');
+            let d = "M0 50 ";
+            for(let x=0; x<=1000; x+=50) {
+                const y = 50 + Math.sin(Date.now() * 0.01 + x * 0.01) * 20;
+                d += `L${x} ${y} `;
+            }
+            path.setAttribute('d', d);
+
+            // Update Time
+            const now = new Date();
+            document.getElementById('timestamp').innerText = 
+                `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${Math.floor(now.getMilliseconds()/10)}`;
+
+            requestAnimationFrame(animate);
+        }
+
+        // Log Simulation
+        const logEntries = [
+            "> Signal burst detected...",
+            "> Analyzing frequency peaks...",
+            "> Decrypting packet header...",
+            "> Memory buffer overflow risk: 2%",
+            "> Feedback loop optimized.",
+            "> Synthetic awareness active.",
+            "> Monitoring ambient pressure...",
+            "> Sub-bass resonance found."
+        ];
+
+        const logContainer = document.getElementById('sys-log');
+        setInterval(() => {
+            const entry = document.createElement('div');
+            entry.innerHTML = logEntries[Math.floor(Math.random() * logEntries.length)];
+            logContainer.prepend(entry);
+            if(logContainer.children.length > 10) logContainer.lastChild.remove();
+        }, 2000);
+
+        animate();
+
+        // Mouse interaction for glitch intensity
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            document.querySelector('.glitch-avatar').style.transform = `translate(${x}px, ${y}px)`;
+        });
+    </script>
+</body>
+</html>
