@@ -50,7 +50,15 @@ If interface data origin is unknown or old, treat as invalid.
 
 ## Active Task
 
-None — awaiting direction
+Exploring GitHub Codespaces for Lumifren development
+
+## Current Environment
+
+- **Location:** GitHub Codespace (testing deployment)
+- **Normal dev environment:** Local machine
+- **Firebase:** Connected from local → Firebase
+- **Backend:** FOUNDRY (Azure AI Foundry)
+- **Purpose:** Testing Codespace workflow vs local dev
 
 ## Previous Task (Completed)
 
